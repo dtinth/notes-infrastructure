@@ -1,0 +1,31 @@
+{
+  "ego.power-tools": {
+    "commands": {
+      "dtinth.journal.linkAssistant": {
+        "script": "linkAssistant.js",
+        "button": {
+          "text": "$(link)"
+        }
+      },
+      "dtinth.journal.openInWeb": {
+        "script": "openInWeb.js",
+        "button": {
+          "text": "$(globe)"
+        }
+      },
+      "dtinth.journal.preview": {
+        "script": "preview.js",
+        "button": {
+          "text": "$(open-preview)"
+        }
+      },
+      "dtinth.journal.search": {
+        "script": "search.js",
+        "button": {
+          "text": "$(search)"
+        }
+      }
+    }
+  },
+  "vscodeMarkdownNotes.allowPipedWikiLinks": true
+}

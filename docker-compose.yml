@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  server:
+    restart: unless-stopped
+    build: .
+    init: true
+    ports:
+      - 127.0.0.1:21001:8080
+    volumes:
+      - ./.env:/usr/src/app/.env
+      - ./src:/usr/src/app/src
+      - ./lib:/usr/src/app/lib
+      - ./journal:/usr/src/app/journal
+      - ./secrets.js:/usr/src/app/secrets.js
+    networks:
+      default:
+      ingress:
+        aliases:
+          - journal-server
+networks:
+  ingress:
+    external: true
+    name: ingress_default
