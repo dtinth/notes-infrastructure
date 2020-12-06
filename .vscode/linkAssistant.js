@@ -2,9 +2,7 @@ exports.execute = async (args) => {
   const vscode = args.require('vscode')
   try {
     const axios = require('axios')
-    const dotenv = require('dotenv')
-    const fs = require('fs')
-    const cfg = dotenv.parse(fs.readFileSync(vscode.workspace.rootPath + '/.env'))
+    const { bingSearchApiKey } = require('../secrets')
 
     let state = global.dtinthSearch
     if (!state) {
@@ -32,7 +30,7 @@ exports.execute = async (args) => {
         result = (await axios.get('https://api.bing.microsoft.com/v7.0/search', {
           params: { q },
           headers: {
-            'Ocp-Apim-Subscription-Key': cfg.AZURE_BING_API_KEY
+            'Ocp-Apim-Subscription-Key': bingSearchApiKey
           }
         })).data
         cache.set(q, result)
