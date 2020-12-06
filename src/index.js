@@ -18,7 +18,7 @@ app.get('/entry', async (req, res, next) => {
     })
     const id = data.id.replace(/\W/g, '')
     res.json({
-      data: fs.readFileSync('journal/' + id + '.md', 'utf8')
+      data: fs.readFileSync('data/' + id + '.md', 'utf8')
     })
   } catch (error) {
     next(error)
@@ -51,12 +51,12 @@ app.post('/search', requireApiAuth, async (req, res, next) => {
   }
 })
 
-chokidar.watch('journal', {
+chokidar.watch('data', {
   ignored: /\.git/
 }).on('all', (event, path) => {
   console.log(event, path)
   if (event === 'add' || event === 'change') {
-    if (path.match(/^journal\/(\w+)\.md$/)) {
+    if (path.match(/^data\/(\w+)\.md$/)) {
       indexDocumentIntoSearchEngine(searchEngine, path, fs.readFileSync(path, 'utf8'))
     }
   }

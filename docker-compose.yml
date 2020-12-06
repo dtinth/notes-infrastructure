@@ -10,7 +10,7 @@ services:
       - ./.env:/usr/src/app/.env
       - ./src:/usr/src/app/src
       - ./lib:/usr/src/app/lib
-      - ./journal:/usr/src/app/journal
+      - ./data:/usr/src/app/data
       - ./secrets.js:/usr/src/app/secrets.js
     networks:
       default:

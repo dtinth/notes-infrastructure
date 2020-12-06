@@ -1,6 +1,6 @@
 const { execSync } = require('child_process')
 
-process.chdir(__dirname + '/../journal')
+process.chdir(__dirname + '/../data')
 execSync('git add .', { stdio: 'inherit' })
 const stats = execSync('git diff --stat --staged').toString().trim().split('\n').pop()
 execSync('git commit -m "' + stats + '"', { stdio: 'inherit' })

@@ -41,7 +41,7 @@ exports.execute = async (args) => {
         // )
       } else {
         vscode.window.showTextDocument(
-          vscode.Uri.file(path.resolve(__dirname, '../journal', pageId + '.md'))
+          vscode.Uri.file(path.resolve(__dirname, '../data', pageId + '.md'))
         )
       }
     })

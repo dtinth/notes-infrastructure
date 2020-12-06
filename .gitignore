@@ -141,3 +141,7 @@ Temporary Items
 
 # End of https://www.toptal.com/developers/gitignore/api/osx,node
 tmp
+
+# https://github.com/microsoft/vscode/issues/37947#issuecomment-460340426
+/data
+/.gitmodules
