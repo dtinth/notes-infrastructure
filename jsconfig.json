@@ -5,7 +5,9 @@
     "jsx": "preserve",
     "strictNullChecks": true,
     "strictFunctionTypes": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "checkJs": true,
+    "skipLibCheck": true
   },
   "exclude": [
     "node_modules",

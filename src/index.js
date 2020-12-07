@@ -12,11 +12,11 @@ app.use(express.json())
 app.get('/entry', async (req, res, next) => {
   try {
     const jwt = String(req.query.jwt)
+    /** @type {any} */
     const data = jsonwebtoken.verify(jwt, secrets.previewSigningSecret, {
       algorithms: ['HS256'],
-      expiresIn: 3600
     })
-    const id = data.id.replace(/\W/g, '')
+    const id = String(data.id).replace(/\W/g, '')
     res.json({
       data: fs.readFileSync('data/' + id + '.md', 'utf8')
     })
@@ -35,7 +35,7 @@ const requireApiAuth = (req, res, next) => {
 
 app.get('/search', requireApiAuth, async (req, res, next) => {
   try {
-    const results = searchEngine.search(req.query.q)
+    const results = searchEngine.minisearch.search(String(req.query.q || ''))
     res.json(results)
   } catch (error) {
     next(error)
@@ -44,7 +44,7 @@ app.get('/search', requireApiAuth, async (req, res, next) => {
 
 app.post('/search', requireApiAuth, async (req, res, next) => {
   try {
-    const results = searchEngine.search(req.body.q)
+    const results = searchEngine.minisearch.search(req.body.q)
     res.json(results)
   } catch (error) {
     next(error)

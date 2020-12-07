@@ -7,6 +7,6 @@ const id =
     "Z" +
     (10000 + 10000 * Math.random()).toString().slice(-4)
 
-const path = 'journal/' + id + '.md'
+const path = 'data/' + id + '.md'
 fs.writeFileSync(path, '---\n---\n\n')
 console.log(`--> ${path}`)
