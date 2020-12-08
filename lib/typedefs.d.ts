@@ -8,6 +8,7 @@ type JournalDocument = {
   topic: boolean
   text: string
   links: string
+  aka: string
   excerpt: string
   title: string
 }

@@ -1,5 +1,6 @@
 const fs = require('fs')
 const express = require('express')
+const glob = require('glob')
 const app = express()
 const chokidar = require('chokidar')
 const jsonwebtoken = require('jsonwebtoken')
@@ -46,6 +47,28 @@ app.post('/search', requireApiAuth, async (req, res, next) => {
   try {
     const results = searchEngine.minisearch.search(req.body.q)
     res.json(results)
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.get('/public', async (req, res, next) => {
+  try {
+    const publicSearchEngine = require('../lib/searchEngine').create()
+    for (const path of glob.sync('data/*.md')) {
+      indexDocumentIntoSearchEngine(
+        publicSearchEngine,
+        path,
+        fs.readFileSync(path, 'utf8'),
+        { publicOnly: true }
+      )
+    }
+    res.json(
+      Array.from(publicSearchEngine.documentMap.values()).map((doc) => {
+        const { text, ...others } = doc
+        return others
+      })
+    )
   } catch (error) {
     next(error)
   }
