@@ -7,6 +7,7 @@ const jsonwebtoken = require('jsonwebtoken')
 const secrets = require('../secrets')
 const searchEngine = require('../lib/searchEngine').create()
 const { indexDocumentIntoSearchEngine } = require('../lib/indexer')
+const importFresh = require('import-fresh')
 
 app.use(express.json())
 
@@ -37,6 +38,21 @@ const requireApiAuth = (req, res, next) => {
 app.get('/search', requireApiAuth, async (req, res, next) => {
   try {
     const results = searchEngine.minisearch.search(String(req.query.q || ''))
+    res.json(results)
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.get('/sidebar', requireApiAuth, async (req, res, next) => {
+  try {
+    const sidebar = /** @type {typeof import('./sidebar')} */ (importFresh(
+      './sidebar'
+    ))
+    const results = await sidebar.getSidebar({
+      searchEngine,
+      currentDocumentId: req.query.id ? String(req.query.id) : undefined,
+    })
     res.json(results)
   } catch (error) {
     next(error)
@@ -93,6 +109,6 @@ chokidar
 
 app.use(express.static('public'))
 
-const server = app.listen(8080, () => {
+const server = app.listen(21001, () => {
   console.log(server.address())
 })
