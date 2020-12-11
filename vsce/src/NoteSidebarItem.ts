@@ -8,6 +8,6 @@ export interface NoteSidebarItem {
   collapsibleState?: vscode.TreeItemCollapsibleState
   icon?: {
     id: string
-    color: string
+    color?: string
   }
 }

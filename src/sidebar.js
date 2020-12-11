@@ -4,6 +4,7 @@ const execa = require('execa')
  * @param {object} options
  * @param {string} [options.currentDocumentId]
  * @param {SearchEngine} options.searchEngine
+ * @return {Promise<NoteSidebarItem[]>}
  */
 exports.getSidebar = async (options) => {
   const id = options.currentDocumentId
@@ -33,6 +34,7 @@ exports.getSidebar = async (options) => {
   /**
    * @param {JournalDocument[]} documents
    * @param {string} idPrefix
+   * @return {NoteSidebarItem[]}
    */
   const children = (documents, idPrefix) => {
     return documents.map((d) => {
@@ -76,40 +78,43 @@ exports.getSidebar = async (options) => {
       id: 'recent',
       label: `Recent changes`,
       collapsibleState: 1,
-      children: children(recents, 'recent').flatMap(
-        (() => {
-          let lastDate = ''
-          /**
-           * @param {{ noteId: string }} item
-           * @param {number} index
-           */
-          const mapper = (item, index) => {
-            const date = idToDateMap.get(item.noteId) ?? '?'
-            if (date === lastDate) {
-              return [item]
-            } else {
-              lastDate = date
-              return [
-                {
-                  id: `recent_date_header_${index}`,
-                  label: date,
-                  icon: { id: 'calendar' },
-                },
-                item,
-              ]
-            }
-          }
-          return mapper
-        })()
-      ),
+      children: groupBy(children(recents, 'recent'), idToDateMap, 'recent'),
     },
   ]
 }
 
 /**
- * @param {string | any[]} items
+ * @param {NoteSidebarItem[]} items
+ * @param {Map<string, string>} map
+ * @param {string} prefix
+ * @return {NoteSidebarItem[]}
+ */
+function groupBy(items, map, prefix) {
+  let lastGroup = ''
+  return items.flatMap((item, index) => {
+    if (!item.noteId) return [item]
+    const group = map.get(item.noteId) ?? '?'
+    if (group === lastGroup) {
+      return [item]
+    } else {
+      lastGroup = group
+      return [
+        {
+          id: `${prefix}_header_${index}`,
+          label: group,
+          icon: { id: 'calendar' },
+        },
+        item,
+      ]
+    }
+  })
+}
+
+/**
+ * @param {NoteSidebarItem[]} items
  * @param {number} max
  * @param {string} prefix
+ * @return {NoteSidebarItem[]}
  */
 function cap(items, max, prefix) {
   if (items.length > max) {

@@ -13,3 +13,5 @@ type JournalDocument = {
   excerpt: string
   title: string
 }
+
+type NoteSidebarItem = import('../vsce/src/NoteSidebarItem').NoteSidebarItem
