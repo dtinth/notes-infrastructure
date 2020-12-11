@@ -1,3 +1,5 @@
+const execa = require('execa')
+
 /**
  * @param {object} options
  * @param {string} [options.currentDocumentId]
@@ -8,6 +10,7 @@ exports.getSidebar = async (options) => {
   if (!id) {
     return []
   }
+  const latestChanges = getLatestChanges()
   const searchEngine = options.searchEngine
   const allDocs = Array.from(searchEngine.documentMap.values())
   const backlinks = allDocs.filter((f) => f.links.includes(id))
@@ -27,34 +30,102 @@ exports.getSidebar = async (options) => {
   })
   /**
    * @param {JournalDocument[]} documents
+   * @param {string} idPrefix
    */
-  const children = (documents) => {
+  const children = (documents, idPrefix) => {
     return documents.map((d) => {
       return {
         label: d.title,
-        id: d.id,
+        id: idPrefix + '_' + d.id,
         noteId: d.id,
       }
     })
   }
+  const idToDateMap = new Map(
+    (await latestChanges).map((change) => {
+      return [change.id, change.timestamp.split('T')[0] ?? '?']
+    })
+  )
+  const recents = (await latestChanges).flatMap((change) => {
+    const document = searchEngine.documentMap.get(change.id)
+    if (!document) return []
+    return [document]
+  })
   return [
     {
       id: 'backlinks',
       label: `Backlinks (${backlinks.length})`,
       collapsibleState: 1,
-      children: children(backlinks),
+      children: children(backlinks, 'backlinks'),
     },
     {
       id: 'similar',
       label: `Unlinked but similar (${similar.length})`,
       collapsibleState: 1,
-      children: children(similar),
+      children: children(similar, 'similar'),
     },
     {
       id: 'links',
       label: `Links (${links.length})`,
       collapsibleState: 1,
-      children: children(links),
+      children: children(links, 'links'),
+    },
+    {
+      id: 'recent',
+      label: `Recent changes`,
+      collapsibleState: 1,
+      children: children(recents, 'recent').flatMap(
+        (() => {
+          let lastDate = ''
+          /**
+           * @param {{ noteId: string }} item
+           * @param {number} index
+           */
+          const mapper = (item, index) => {
+            const date = idToDateMap.get(item.noteId) ?? '?'
+            if (date === lastDate) {
+              return [item]
+            } else {
+              lastDate = date
+              return [
+                {
+                  id: `recent_date_header_${index}`,
+                  label: date,
+                  icon: { id: 'calendar' },
+                },
+                item,
+              ]
+            }
+          }
+          return mapper
+        })()
+      ),
     },
   ]
+}
+
+async function getLatestChanges() {
+  const data = await execa(
+    "git log --name-only --format='@ %cI %H' --max-count=25",
+    { shell: true, cwd: 'data' }
+  )
+  const lines = data.stdout.split('\n').map((l) => l.trim())
+  const seen = new Set()
+  /** @type {{ id: string; timestamp: string }[]} */
+  const result = []
+  let timestamp = ''
+  for (const line of lines) {
+    /** @type {RegExpMatchArray | null} */
+    let m = null
+    if ((m = line.match(/^@ (\S+)/))) {
+      timestamp = m[1]
+    } else if ((m = line.match(/^(\w+)\.md$/))) {
+      const id = m[1]
+      if (!seen.has(id)) {
+        seen.add(id)
+        result.push({ id, timestamp })
+      }
+    }
+  }
+  return result
 }

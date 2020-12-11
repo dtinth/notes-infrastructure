@@ -30,6 +30,14 @@ export class NoteSidebarProvider
         title: 'Open this file',
       }
     }
+    if (element.icon) {
+      outItem.iconPath = new vscode.ThemeIcon(
+        element.icon.id,
+        element.icon.color
+          ? new vscode.ThemeColor(element.icon.color)
+          : undefined
+      )
+    }
     return outItem
   }
 
@@ -71,16 +79,37 @@ export interface NoteSidebarItem {
   noteId?: string
   children?: NoteSidebarItem[]
   collapsibleState?: vscode.TreeItemCollapsibleState
+  icon?: {
+    id: string
+    color: string
+  }
 }
 
 export function activate(context: vscode.ExtensionContext) {
   const sidebarProvider = new NoteSidebarProvider()
+  const debouncedRefresh = debounce(() => sidebarProvider.refresh())
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('dtinth-notes', sidebarProvider),
     vscode.commands.registerCommand('dtinth-notes.refresh', () => {
       sidebarProvider.refresh()
+    }),
+    vscode.window.onDidChangeActiveTextEditor(() => {
+      debouncedRefresh()
+    }),
+    vscode.workspace.onDidSaveTextDocument(() => {
+      debouncedRefresh()
     })
   )
+}
+
+function debounce(action: () => void) {
+  let t: NodeJS.Timeout | undefined
+  return () => {
+    if (t) {
+      clearTimeout(t)
+    }
+    t = setTimeout(() => action(), 500)
+  }
 }
 
 export function deactivate() {}

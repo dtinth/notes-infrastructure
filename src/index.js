@@ -93,6 +93,7 @@ app.get('/public', async (req, res, next) => {
 chokidar
   .watch('data', {
     ignored: /\.git/,
+    awaitWriteFinish: true,
   })
   .on('all', (event, path) => {
     console.log(event, path)

@@ -6,6 +6,11 @@ services:
     init: true
     ports:
       - 127.0.0.1:21001:21001
+      - 127.0.0.1:9229:9229
+    command:
+      - bash
+      - '-c'
+      - 'node --inspect=0.0.0.0 src/index.js'
     volumes:
       - ./.env:/usr/src/app/.env
       - ./src:/usr/src/app/src
