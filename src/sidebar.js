@@ -15,14 +15,24 @@ exports.getSidebar = async (options) => {
   const searchEngine = options.searchEngine
   const currentDocument = searchEngine.documentMap.get(id)
   const allDocs = Array.from(searchEngine.documentMap.values())
-  const backlinks = allDocs.filter((f) => f.links.includes(id))
+  const backlinkIds = new Set(
+    allDocs.filter((f) => f.links.includes(id)).map((d) => d.id)
+  )
   const linkedIds = new Set(
     (searchEngine.documentMap.get(id)?.links || '').split(' ')
   )
-  const links = allDocs.filter((f) => linkedIds.has(f.id))
+  const bidiLinkIds = new Set(
+    Array.from(backlinkIds).filter((id) => linkedIds.has(id))
+  )
+  const bidiLinks = allDocs.filter((f) => bidiLinkIds.has(f.id))
+  const backlinks = allDocs.filter(
+    (f) => backlinkIds.has(f.id) && !bidiLinkIds.has(f.id)
+  )
+  const links = allDocs.filter(
+    (f) => linkedIds.has(f.id) && !bidiLinkIds.has(f.id)
+  )
   const searchText = id + ' ' + (searchEngine.contentsMap.get(id) || '')
   const searchResults = searchEngine.minisearch.search(searchText)
-  const backlinkIds = new Set(backlinks.map((b) => b.id))
   const similar = searchResults.flatMap((r) => {
     const id = r.id
     if (id === options.currentDocumentId) return []
@@ -59,6 +69,12 @@ exports.getSidebar = async (options) => {
   })
   return [
     ...(currentDocument ? children([currentDocument], 'current') : []),
+    {
+      id: 'bidiLinks',
+      label: `Bidirectional links (${bidiLinks.length})`,
+      collapsibleState: 1,
+      children: children(bidiLinks, 'bidiLinks'),
+    },
     {
       id: 'backlinks',
       label: `Backlinks (${backlinks.length})`,

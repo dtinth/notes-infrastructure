@@ -87,7 +87,7 @@ async function getItems(searchText) {
     return {
       label: (isLink ? '$(link) ' : '') + title,
       id,
-      description: id,
+      description: '',
       detail: excerpt,
       alwaysShow: true,
     }
