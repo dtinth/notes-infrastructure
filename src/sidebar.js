@@ -23,7 +23,9 @@ exports.getSidebar = async (options) => {
   const backlinkIds = new Set(backlinks.map((b) => b.id))
   const similar = searchResults.flatMap((r) => {
     const id = r.id
+    if (id === options.currentDocumentId) return []
     if (backlinkIds.has(id)) return []
+    if (linkedIds.has(id)) return []
     const document = searchEngine.documentMap.get(id)
     if (!document) return []
     return [document]
@@ -62,7 +64,7 @@ exports.getSidebar = async (options) => {
       id: 'similar',
       label: `Unlinked but similar (${similar.length})`,
       collapsibleState: 1,
-      children: children(similar, 'similar'),
+      children: cap(children(similar, 'similar'), 10, 'similar'),
     },
     {
       id: 'links',
@@ -102,6 +104,27 @@ exports.getSidebar = async (options) => {
       ),
     },
   ]
+}
+
+/**
+ * @param {string | any[]} items
+ * @param {number} max
+ * @param {string} prefix
+ */
+function cap(items, max, prefix) {
+  if (items.length > max) {
+    return [
+      ...items.slice(0, max),
+      {
+        id: prefix + '_' + 'seeMore',
+        collapsibleState: 1,
+        label: `${items.length - max} more...`,
+        children: items.slice(max),
+      },
+    ]
+  } else {
+    return items
+  }
 }
 
 async function getLatestChanges() {
