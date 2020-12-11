@@ -13,6 +13,7 @@ exports.getSidebar = async (options) => {
   }
   const latestChanges = getLatestChanges()
   const searchEngine = options.searchEngine
+  const currentDocument = searchEngine.documentMap.get(id)
   const allDocs = Array.from(searchEngine.documentMap.values())
   const backlinks = allDocs.filter((f) => f.links.includes(id))
   const linkedIds = new Set(
@@ -40,6 +41,7 @@ exports.getSidebar = async (options) => {
     return documents.map((d) => {
       return {
         label: d.title,
+        description: d.public ? '(public)' : '',
         id: idPrefix + '_' + d.id,
         noteId: d.id,
       }
@@ -56,6 +58,7 @@ exports.getSidebar = async (options) => {
     return [document]
   })
   return [
+    ...(currentDocument ? children([currentDocument], 'current') : []),
     {
       id: 'backlinks',
       label: `Backlinks (${backlinks.length})`,

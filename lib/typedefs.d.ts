@@ -12,6 +12,7 @@ type JournalDocument = {
   aka: string
   excerpt: string
   title: string
+  public: boolean
 }
 
 type NoteSidebarItem = import('../vsce/src/NoteSidebarItem').NoteSidebarItem
