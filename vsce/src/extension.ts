@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import axios from 'axios'
 import * as path from 'path'
+import { NoteSidebarItem } from './NoteSidebarItem'
 
 export class NoteSidebarProvider
   implements vscode.TreeDataProvider<NoteSidebarItem> {
@@ -70,18 +71,6 @@ export class NoteSidebarProvider
         })
     }
     return this.currentTree
-  }
-}
-
-export interface NoteSidebarItem {
-  id: string
-  label: string
-  noteId?: string
-  children?: NoteSidebarItem[]
-  collapsibleState?: vscode.TreeItemCollapsibleState
-  icon?: {
-    id: string
-    color: string
   }
 }
 
