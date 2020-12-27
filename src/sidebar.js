@@ -11,7 +11,8 @@ exports.getSidebar = async (options) => {
   if (!id) {
     return []
   }
-  const latestChanges = getLatestChanges()
+  const latestChangesPromise = getLatestChanges()
+  const uncommittedChangesPromise = getUncommittedChanges()
   const searchEngine = options.searchEngine
   const currentDocument = searchEngine.documentMap.get(id)
   const allDocs = Array.from(searchEngine.documentMap.values())
@@ -58,11 +59,16 @@ exports.getSidebar = async (options) => {
     })
   }
   const idToDateMap = new Map(
-    (await latestChanges).map((change) => {
+    (await latestChangesPromise).map((change) => {
       return [change.id, change.timestamp.split('T')[0] ?? '?']
     })
   )
-  const recents = (await latestChanges).flatMap((change) => {
+  const recents = (await latestChangesPromise).flatMap((change) => {
+    const document = searchEngine.documentMap.get(change.id)
+    if (!document) return []
+    return [document]
+  })
+  const uncommitted = (await uncommittedChangesPromise).flatMap((change) => {
     const document = searchEngine.documentMap.get(change.id)
     if (!document) return []
     return [document]
@@ -92,6 +98,12 @@ exports.getSidebar = async (options) => {
       label: `Links (${links.length})`,
       collapsibleState: 1,
       children: children(links, 'links'),
+    },
+    {
+      id: 'uncommitted',
+      label: `Uncommitted changes (${uncommitted.length})`,
+      collapsibleState: 1,
+      children: children(uncommitted, 'uncommitted'),
     },
     {
       id: 'recent',
@@ -175,4 +187,14 @@ async function getLatestChanges() {
     }
   }
   return result
+}
+
+async function getUncommittedChanges() {
+  const data = await execa('git diff --numstat', { shell: true, cwd: 'data' })
+  const lines = data.stdout.split('\n').map((l) => l.trim())
+  return lines.flatMap((line) => {
+    if (!line) return []
+    const [additions, deletions, name] = line.split(/\t/)
+    return line ? [{ id: name.replace(/\.md$/, ''), additions, deletions }] : []
+  })
 }
