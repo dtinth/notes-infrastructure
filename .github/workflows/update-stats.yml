@@ -13,3 +13,6 @@ jobs:
           node-version: 14.x
       - run: yarn
       - run: node .github/actions/update-stats
+        env:
+          BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+          NOTES_API_PREFIX: ${{ secrets.NOTES_API_PREFIX }}
