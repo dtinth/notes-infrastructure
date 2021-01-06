@@ -1,6 +1,8 @@
-const path = require('path');
+const path = require('path')
 const fs = require('fs')
-const env = require('dotenv').parse(fs.readFileSync(path.join(__dirname, '.env')))
+const env = require('dotenv').parse(
+  fs.readFileSync(path.join(__dirname, '.env'))
+)
 const encrypted = require('@dtinth/encrypted')(env.ENCRYPTION_SECRET)
 
 module.exports = {
@@ -15,5 +17,13 @@ module.exports = {
   bingSearchApiKey: encrypted(`
     AdL8Uce3E/wq4xeLZkaP+zw2H9ojI+n2.zExBmiuHkK96cu9oIy+VCm3X6EDdGLnUepRki1l
     +7IdZNF4OgujvfBYLVKjkhFk6DgE=
-  `)
+  `),
+  nodeIdHashingSalt: encrypted(`
+    lIj+sUgJO0uHxVL0GqOBM909pkdPY7WE.8raKyneQJZjocFFhMZHVbK3RlQnKwoaR2JEeRZE
+    1M9cUbMygcVT+XcOg48t7mAjwBpw0gQCpGDTyx3OXT1I=
+  `),
+  publicPathPrefix: encrypted(`
+    elE70UnDAcVc9NLS0CTkJgvkDfqi2TEI.MYjb6b39rnmexn33YqrCRmpKKVR3RRHLnq98HuW
+    Briu33FWBfTqWz+gYZ8lAtd1oFRQ0UdxyGmbUXiEt8Jg7nBgi
+  `),
 }
