@@ -1,6 +1,7 @@
 const fs = require('fs')
 const express = require('express')
 const glob = require('glob')
+const { createHash } = require('crypto')
 const app = express()
 const chokidar = require('chokidar')
 const jsonwebtoken = require('jsonwebtoken')
@@ -68,27 +69,58 @@ app.post('/search', requireApiAuth, async (req, res, next) => {
   }
 })
 
-app.get('/public', async (req, res, next) => {
+const publicApp = express.Router()
+app.use('/public/' + secrets.publicPathPrefix, publicApp)
+
+publicApp.get('/entries-count.json', async (req, res, next) => {
   try {
-    const publicSearchEngine = require('../lib/searchEngine').create()
-    for (const path of glob.sync('data/*.md')) {
-      indexDocumentIntoSearchEngine(
-        publicSearchEngine,
-        path,
-        fs.readFileSync(path, 'utf8'),
-        { publicOnly: true }
-      )
-    }
-    res.json(
-      Array.from(publicSearchEngine.documentMap.values()).map((doc) => {
-        const { text, ...others } = doc
-        return others
-      })
-    )
+    const files = glob.sync('data/*.md')
+    res.json(files.length)
   } catch (error) {
     next(error)
   }
 })
+
+publicApp.get('/link-graph.json', async (req, res, next) => {
+  try {
+    res.json(getGraph())
+  } catch (error) {
+    next(error)
+  }
+})
+
+/**
+ * @param {string} docId
+ */
+const getNodeId = (docId) => {
+  return createHash('sha1')
+    .update(secrets.nodeIdHashingSalt)
+    .update(docId)
+    .digest('base64')
+}
+
+function getGraph() {
+  const graph = {}
+  /**
+   * @param {string} docId
+   */
+  const getNode = (docId) => {
+    const nodeId = getNodeId(docId)
+    let node = graph[nodeId]
+    if (!node) {
+      node = { links: [] }
+      graph[nodeId] = node
+    }
+    return node
+  }
+  for (const value of searchEngine.documentMap.values()) {
+    for (const link of value.links.split(' ').filter((x) => x)) {
+      const node = getNode(value.id)
+      node.links.push(getNodeId(link))
+    }
+  }
+  return graph
+}
 
 chokidar
   .watch('data', {
