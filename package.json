@@ -3,6 +3,7 @@
     "@dtinth/encrypted": "^0.2.1",
     "axios": "^0.21.0",
     "chokidar": "^3.4.3",
+    "date-fns": "^2.16.1",
     "dotenv": "^8.2.0",
     "execa": "^5.0.0",
     "express": "^4.17.1",
@@ -10,6 +11,7 @@
     "gray-matter": "^4.0.2",
     "import-fresh": "^3.2.2",
     "jsonwebtoken": "^8.5.1",
+    "make-promises-safe": "^5.1.0",
     "minisearch": "^3.0.2",
     "stemmer": "^1.0.5",
     "stopwords": "^0.0.9"
