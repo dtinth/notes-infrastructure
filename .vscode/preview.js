@@ -10,7 +10,7 @@ exports.execute = async (args) => {
       .replace(/\.md$/, '')
     const jwt = jsonwebtoken.sign({ id }, secrets.previewSigningSecret, {
       algorithm: 'HS256',
-      expiresIn: 86400,
+      expiresIn: 5 * 86400,
     })
     vscode.env.openExternal(
       vscode.Uri.parse('https://notes.dt.in.th/preview-' + jwt)
