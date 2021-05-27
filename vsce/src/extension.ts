@@ -82,6 +82,29 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('dtinth-notes.refresh', () => {
       sidebarProvider.refresh()
     }),
+    vscode.commands.registerCommand('dtinth-notes.add', async () => {
+      const wsedit = new vscode.WorkspaceEdit()
+      const folder = vscode.workspace.workspaceFolders?.[0]
+      if (!folder) {
+        return
+      }
+      const wsPath = folder.uri.fsPath
+      const fs = require('fs')
+      const id =
+        new Date(Date.now()).toJSON().replace(/\W/g, '').slice(0, 15) +
+        'Z' +
+        (10000 + 10000 * Math.random()).toString().slice(-4)
+
+      const filePath = vscode.Uri.file(wsPath + '/data/' + id + '.md')
+      wsedit.createFile(filePath, { ignoreIfExists: true })
+      wsedit.insert(
+        filePath,
+        new vscode.Position(0, 0),
+        '---\npublic: false\n---\n'
+      )
+      await vscode.workspace.applyEdit(wsedit)
+      await vscode.workspace.openTextDocument(filePath)
+    }),
     vscode.window.onDidChangeActiveTextEditor(() => {
       debouncedRefresh()
     }),

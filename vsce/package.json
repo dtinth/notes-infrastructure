@@ -16,6 +16,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "dtinth-notes.add",
+        "title": "Add new note",
+        "icon": "$(add)"
+      },
+      {
         "command": "dtinth-notes.refresh",
         "title": "Refresh notes sidebar",
         "icon": "$(refresh)"
@@ -23,6 +28,11 @@
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "dtinth-notes.add",
+          "when": "view == dtinth-notes",
+          "group": "navigation"
+        },
         {
           "command": "dtinth-notes.refresh",
           "when": "view == dtinth-notes",
