@@ -89,7 +89,6 @@ export function activate(context: vscode.ExtensionContext) {
         return
       }
       const wsPath = folder.uri.fsPath
-      const fs = require('fs')
       const id =
         new Date(Date.now()).toJSON().replace(/\W/g, '').slice(0, 15) +
         'Z' +
@@ -103,7 +102,9 @@ export function activate(context: vscode.ExtensionContext) {
         '---\npublic: false\n---\n'
       )
       await vscode.workspace.applyEdit(wsedit)
-      await vscode.workspace.openTextDocument(filePath)
+      const document = await vscode.workspace.openTextDocument(filePath)
+      await document.save()
+      await vscode.window.showTextDocument(document)
     }),
     vscode.window.onDidChangeActiveTextEditor(() => {
       debouncedRefresh()
