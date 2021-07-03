@@ -69,14 +69,23 @@ app.post('/sync', requireApiAuth, async (req, res, next) => {
     }
     if (req.body.write) {
       const newContents = Buffer.from(req.body.write.contents)
-      if (currentHash && currentHash !== req.body.write.lastSynchronizedHash) {
+      const newHash = createHash('sha1').update(newContents).digest('hex')
+      if (currentHash && newHash === currentHash) {
+        result.status = 'Already up-to-date'
+        result.written = true
+      } else if (
+        currentHash &&
+        currentHash !== req.body.write.lastSynchronizedHash
+      ) {
         result.status = 'Data conflict'
+      } else if (req.body.write.lastSynchronizedHash && !currentHash) {
+        result.status = 'Removed from here'
       } else {
         result.status = 'Saved'
         result.written = true
         fs.writeFileSync(filePath, newContents)
         result.contents = newContents.toString('utf8')
-        result.hash = createHash('sha1').update(newContents).digest('hex')
+        result.hash = newHash
       }
     }
 

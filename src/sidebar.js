@@ -8,19 +8,16 @@ const execa = require('execa')
  */
 exports.getSidebar = async (options) => {
   const id = options.currentDocumentId
-  if (!id) {
-    return []
-  }
   const latestChangesPromise = getLatestChanges()
   const uncommittedChangesPromise = getUncommittedChanges()
   const searchEngine = options.searchEngine
-  const currentDocument = searchEngine.documentMap.get(id)
+  const currentDocument = id ? searchEngine.documentMap.get(id) : null
   const allDocs = Array.from(searchEngine.documentMap.values())
   const backlinkIds = new Set(
-    allDocs.filter((f) => f.links.includes(id)).map((d) => d.id)
+    id ? allDocs.filter((f) => f.links.includes(id)).map((d) => d.id) : []
   )
   const linkedIds = new Set(
-    (searchEngine.documentMap.get(id)?.links || '').split(' ')
+    id ? (searchEngine.documentMap.get(id)?.links || '').split(' ') : []
   )
   const bidiLinkIds = new Set(
     Array.from(backlinkIds).filter((id) => linkedIds.has(id))
@@ -32,7 +29,9 @@ exports.getSidebar = async (options) => {
   const links = allDocs.filter(
     (f) => linkedIds.has(f.id) && !bidiLinkIds.has(f.id)
   )
-  const searchText = id + ' ' + (searchEngine.contentsMap.get(id) || '')
+  const searchText = id
+    ? id + ' ' + (searchEngine.contentsMap.get(id) || '')
+    : ''
   const searchResults = searchEngine.minisearch.search(searchText)
   const similar = searchResults.flatMap((r) => {
     const id = r.id
