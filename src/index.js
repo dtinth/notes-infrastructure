@@ -45,6 +45,47 @@ app.get('/search', requireApiAuth, async (req, res, next) => {
   }
 })
 
+app.post('/sync', requireApiAuth, async (req, res, next) => {
+  try {
+    const id = String(req.body.id).replace(/\W/g, '')
+    if (!id) {
+      res.status(400).send('No ID')
+      return
+    }
+    const filePath = 'data/' + id + '.md'
+
+    const currentContents = fs.existsSync(filePath)
+      ? fs.readFileSync(filePath)
+      : null
+    const currentHash = currentContents
+      ? createHash('sha1').update(currentContents).digest('hex')
+      : null
+
+    const result = {
+      written: false,
+      status: 'Retrieved note entry',
+      contents: currentContents?.toString('utf8'),
+      hash: currentHash,
+    }
+    if (req.body.write) {
+      const newContents = Buffer.from(req.body.write.contents)
+      if (currentHash && currentHash !== req.body.write.lastSynchronizedHash) {
+        result.status = 'Data conflict'
+      } else {
+        result.status = 'Saved'
+        result.written = true
+        fs.writeFileSync(filePath, newContents)
+        result.contents = newContents.toString('utf8')
+        result.hash = createHash('sha1').update(newContents).digest('hex')
+      }
+    }
+
+    res.json(result)
+  } catch (error) {
+    next(error)
+  }
+})
+
 app.get('/sidebar', requireApiAuth, async (req, res, next) => {
   try {
     const sidebar = /** @type {typeof import('./sidebar')} */ (importFresh(
