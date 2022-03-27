@@ -1,4 +1,4 @@
-FROM node:14.15.1
+FROM node:16.14.2
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 COPY yarn.lock /usr/src/app/
