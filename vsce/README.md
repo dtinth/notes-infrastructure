@@ -1,6 +1,12 @@
 # VS Code integration
 
-`ln -s $PWD ~/.vscode/extensions/dtinth.dtinth-notes`
+Installing the extension:
+
+```
+yarn
+yarn compile
+ln -s $PWD ~/.vscode-server-insiders/extensions/dtinth.dtinth-notes
+```
 
 ## Features
 
