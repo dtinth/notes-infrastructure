@@ -1,7 +1,9 @@
 import * as vscode from 'vscode'
 import axios from 'axios'
 import * as path from 'path'
+import * as jsonwebtoken from 'jsonwebtoken'
 import { NoteSidebarItem } from './NoteSidebarItem'
+import { runSearch } from './noteSearch'
 
 export class NoteSidebarProvider
   implements vscode.TreeDataProvider<NoteSidebarItem> {
@@ -106,6 +108,23 @@ export function activate(context: vscode.ExtensionContext) {
       await document.save()
       await vscode.window.showTextDocument(document)
     }),
+    vscode.commands.registerCommand('dtinth-notes.preview', async () => {
+      const id = getCurrentNoteId()
+      if (!id) {
+        vscode.window.showErrorMessage('No active note')
+        return
+      }
+      const jwt = jsonwebtoken.sign({ id }, getSecrets().previewSigningSecret, {
+        algorithm: 'HS256',
+        expiresIn: 5 * 86400,
+      })
+      vscode.env.openExternal(
+        vscode.Uri.parse('https://notes.dt.in.th/preview-' + jwt)
+      )
+    }),
+    vscode.commands.registerCommand('dtinth-notes.search', async () => {
+      return runSearch(getSecrets())
+    }),
     vscode.window.onDidChangeActiveTextEditor(() => {
       debouncedRefresh()
     }),
@@ -113,6 +132,17 @@ export function activate(context: vscode.ExtensionContext) {
       debouncedRefresh()
     })
   )
+}
+
+function getCurrentNoteId() {
+  return vscode.window.activeTextEditor?.document.fileName
+    .split(/[/\\]/)
+    .pop()
+    ?.replace(/\.md$/, '')
+}
+
+function getSecrets() {
+  return require('../../secrets')
 }
 
 function debounce(action: () => void) {

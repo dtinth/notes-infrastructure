@@ -24,6 +24,21 @@
         "command": "dtinth-notes.refresh",
         "title": "Refresh notes sidebar",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "dtinth-notes.preview",
+        "title": "Preview note",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "dtinth-notes.open",
+        "title": "Open current note in web",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "dtinth-notes.search",
+        "title": "Search for a note",
+        "icon": "$(search)"
       }
     ],
     "menus": {
@@ -34,7 +49,22 @@
           "group": "navigation"
         },
         {
+          "command": "dtinth-notes.search",
+          "when": "view == dtinth-notes",
+          "group": "navigation"
+        },
+        {
           "command": "dtinth-notes.refresh",
+          "when": "view == dtinth-notes",
+          "group": "navigation"
+        },
+        {
+          "command": "dtinth-notes.open",
+          "when": "view == dtinth-notes",
+          "group": "navigation"
+        },
+        {
+          "command": "dtinth-notes.preview",
           "when": "view == dtinth-notes",
           "group": "navigation"
         }
@@ -61,6 +91,7 @@
   },
   "devDependencies": {
     "@types/glob": "^7.1.3",
+    "@types/jsonwebtoken": "^8.5.8",
     "@types/mocha": "^8.0.4",
     "@types/node": "^12.11.7",
     "@types/vscode": "^1.51.0",
