@@ -1,6 +1,7 @@
 import { execFileSync } from 'child_process'
 import searchEngineFactory from '../lib/searchEngine.js'
 import { indexDocumentIntoSearchEngine } from '../lib/indexer.js'
+import { writeFileSync } from 'fs'
 
 const indexId = '20201003T154758Z3667'
 const searchEngine = searchEngineFactory.create()
@@ -81,7 +82,6 @@ while (fringe.length > 0) {
 }
 
 const indexNode = nodeMap.get(indexId)
-
 function printToc(node, depth = 0) {
   if (!node) {
     return
@@ -94,3 +94,4 @@ function printToc(node, depth = 0) {
   }
 }
 printToc(indexNode)
+writeFileSync('data/metadata/public.json', JSON.stringify(indexNode))
