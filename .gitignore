@@ -145,3 +145,4 @@ tmp
 # https://github.com/microsoft/vscode/issues/37947#issuecomment-460340426
 /data
 /.gitmodules
+/.data

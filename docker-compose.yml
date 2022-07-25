@@ -14,6 +14,7 @@ services:
       - 'node --inspect=0.0.0.0 src/index.js'
     volumes:
       - ./.env:/usr/src/app/.env
+      - ./.data:/usr/src/app/.data
       - ./src:/usr/src/app/src
       - ./lib:/usr/src/app/lib
       - ./data:/usr/src/app/data

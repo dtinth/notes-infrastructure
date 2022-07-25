@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@dtinth/encrypted": "^0.2.1",
+    "@google-cloud/storage": "^6.2.3",
     "axios": "^0.21.0",
     "chokidar": "^3.4.3",
     "date-fns": "^2.16.1",
@@ -13,10 +14,13 @@
     "jsonwebtoken": "^8.5.1",
     "make-promises-safe": "^5.1.0",
     "minisearch": "^3.0.2",
+    "p-map": "^5.5.0",
     "stemmer": "^1.0.5",
-    "stopwords": "^0.0.9"
+    "stopwords": "^0.0.9",
+    "tar": "^6.1.11"
   },
   "devDependencies": {
+    "@types/node": "16",
     "nodemon": "^2.0.4",
     "prettier": "^2.2.1",
     "vue": "3.0.0-rc.8",
