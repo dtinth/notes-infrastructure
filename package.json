@@ -20,6 +20,7 @@
     "tar": "^6.1.11"
   },
   "devDependencies": {
+    "@types/express": "^4.17.13",
     "@types/node": "16",
     "nodemon": "^2.0.4",
     "prettier": "^2.2.1",
