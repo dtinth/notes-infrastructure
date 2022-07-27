@@ -1,4 +1,5 @@
 const fs = require('fs')
+const http = require('http')
 const express = require('express')
 const glob = require('glob')
 const { createHash } = require('crypto')
@@ -192,6 +193,17 @@ chokidar
 
 app.use(express.static('public'))
 
-const server = app.listen(21001, () => {
+const server = http.createServer((req, res) => {
+  if (req.url?.startsWith('/v2/')) {
+    import('./serverV2.mjs').then(async ({ app }) => {
+      await app.ready()
+      app.server.emit('request', req, res)
+    })
+  } else {
+    app(req, res)
+  }
+})
+
+server.listen(21001, () => {
   console.log(server.address())
 })

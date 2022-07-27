@@ -8,6 +8,7 @@
     "dotenv": "^8.2.0",
     "execa": "^5.0.0",
     "express": "^4.17.1",
+    "fastify": "^4.3.0",
     "glob": "^7.1.6",
     "gray-matter": "^4.0.2",
     "import-fresh": "^3.2.2",

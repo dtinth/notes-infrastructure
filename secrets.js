@@ -26,4 +26,8 @@ module.exports = {
     elE70UnDAcVc9NLS0CTkJgvkDfqi2TEI.MYjb6b39rnmexn33YqrCRmpKKVR3RRHLnq98HuW
     Briu33FWBfTqWz+gYZ8lAtd1oFRQ0UdxyGmbUXiEt8Jg7nBgi
   `),
+  gitHubWebhookKey: encrypted(`
+    BKivGCPOd9uFOGm2fE/iWV+GAOA14d6j.PDZ44oLssLVWe5z9oecnHKEMF8vT6+0WZD7fzuB
+    /xSq1+woFocPCnGeyp/JWc40CrTpT8/k+UsiQPX3FaF9r3FHlBk05ORF2Z6and/jJq/hrwg==
+  `),
 }
