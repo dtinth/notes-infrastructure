@@ -1,14 +1,17 @@
 import 'dotenv/config.js'
 import tar from 'tar'
-import { PassThrough } from 'stream'
+import { PassThrough, Readable } from 'stream'
 import { pipeline } from 'stream/promises'
 import searchEngineFactory from '../../lib/searchEngine.js'
 import { indexDocumentIntoSearchEngine } from '../../lib/indexer.js'
-import { spawn } from 'child_process'
+import { App } from 'octokit'
+import { spawn, spawnSync } from 'child_process'
 import { Storage } from '@google-cloud/storage'
 import { createHash } from 'crypto'
 import pMap from 'p-map'
 import { log, resolve } from '../../lib/workerLib.mjs'
+import { readFileSync } from 'fs'
+import { basename } from 'path'
 
 const bucket = new Storage().bucket('dtinth-notes.appspot.com')
 
@@ -36,11 +39,40 @@ async function* readTar(input, filter) {
   await pipelinePromise
 }
 
-async function loadPublicNotes() {
-  const data = spawn('cd data && git archive origin/main', {
-    shell: true,
-    stdio: ['ignore', 'pipe', 'inherit'],
+async function loadTar() {
+  const app = new App({
+    appId: 83405,
+    privateKey: readFileSync(
+      process.env.GITHUB_APPLICATION_CREDENTIALS || '',
+      'utf8'
+    ),
   })
+  const octokit = await app.getInstallationOctokit(12187926)
+  const owner = String(process.env.VAULT_OWNER)
+  const repo = String(process.env.VAULT_REPO)
+  const result = await octokit.rest.repos.downloadTarballArchive({
+    owner,
+    repo,
+    ref: 'main',
+  })
+  const ab = /** @type {ArrayBuffer} */ (result.data)
+  log(`Downloaded tarball archive of size ${ab.byteLength}`)
+  return ab
+}
+
+async function loadPublicNotes() {
+  // spawnSync('cd data && git fetch origin main', {
+  //   shell: true,
+  //   stdio: 'inherit',
+  // })
+  // const data = spawn('cd data && git archive origin/main', {
+  //   shell: true,
+  //   stdio: ['ignore', 'pipe', 'inherit'],
+  // })
+  // const tarball = data.stdout
+
+  const tarball = new PassThrough()
+  tarball.end(Buffer.from(await loadTar()))
 
   /** @type {Map<string, Buffer>} */
   const sourceMap = new Map()
@@ -50,12 +82,14 @@ async function loadPublicNotes() {
   let written = header.length
   process.stdout.write(header)
 
-  const filter = (path, entry) =>
-    entry.type === 'File' && entry.path.match(/^[^/]+\.md$/)
+  const filter = (path, entry) => {
+    const name = basename(entry.path)
+    return entry.type === 'File' && name.match(/^[^/]+\.md$/)
+  }
 
-  for await (const item of readTar(data.stdout, filter)) {
+  for await (const item of readTar(tarball, filter)) {
     const source = item.content.toString()
-    const path = item.entry.path
+    const path = basename(item.entry.path)
     const id = indexDocumentIntoSearchEngine(searchEngine, path, source, {
       publicOnly: true,
     })

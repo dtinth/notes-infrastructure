@@ -15,6 +15,7 @@
     "jsonwebtoken": "^8.5.1",
     "make-promises-safe": "^5.1.0",
     "minisearch": "^3.0.2",
+    "octokit": "^2.0.4",
     "p-map": "^5.5.0",
     "stemmer": "^1.0.5",
     "stopwords": "^0.0.9",
