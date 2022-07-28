@@ -2,6 +2,7 @@ type SearchEngine = {
   minisearch: import('minisearch').default
   documentMap: Map<string, JournalDocument>
   contentsMap: Map<string, string>
+  redirectMap: Map<string, string>
 }
 
 type JournalDocument = {

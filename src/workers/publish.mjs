@@ -131,6 +131,22 @@ async function main() {
   const hashMap = new Map()
   const toUpload = new Set()
   const toDelete = new Set()
+  for (const [from, to] of searchEngine.redirectMap) {
+    if (!sourceMap.has(from)) {
+      sourceMap.set(
+        from,
+        Buffer.from(
+          [
+            '---',
+            'public: true',
+            'redirect_to: ' + JSON.stringify(to),
+            '---',
+            `Redirect to [${to}](${to})`,
+          ].join('\n')
+        )
+      )
+    }
+  }
   for (const [id, source] of sourceMap) {
     const hash = createHash('sha1').update(source).digest('hex')
     hashMap.set(id, hash)
