@@ -1,29 +1,26 @@
-const parseFrontmatter = require('gray-matter')
-const path = require('path')
+import parseFrontmatter from 'gray-matter'
+import path from 'path'
+import { MarkdownContent } from './contentParser'
 
-/**
- * @param {SearchEngine} searchEngine
- * @param {string} filename
- * @param {string} contents
- * @param {object} [options]
- * @param {boolean} [options.publicOnly]
- */
-exports.indexDocumentIntoSearchEngine = (
-  searchEngine,
-  filename,
-  contents,
-  options = {}
-) => {
+export interface IndexOptions {
+  publicOnly?: boolean
+}
+
+export function indexDocumentIntoSearchEngine(
+  searchEngine: SearchEngine,
+  filename: string,
+  contents: string,
+  options: IndexOptions = {}
+) {
   let { data: frontmatter, content } = parseFrontmatter(contents)
   if (!frontmatter.public && options.publicOnly) {
     return
   }
   content = content.trim()
-  const links = []
-  content = content.replace(/\((\d+T\d+Z\d+)\)/g, (_, pageId) => {
-    links.push(pageId)
-    return ''
-  })
+  const markdownContent = new MarkdownContent(content)
+  const links: string[] = markdownContent.links.filter((l) => !l.includes(':'))
+
+  content = content.replace(/\((\d+T\d+Z\d+)\)/g, '')
   let title = frontmatter.title || ''
   if (!title) {
     const match = content.match(/^(.*?)(?:\.\s|\n|$)/)

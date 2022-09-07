@@ -1,6 +1,6 @@
 import { execFileSync } from 'child_process'
-import searchEngineFactory from '../lib/searchEngine.js'
-import { indexDocumentIntoSearchEngine } from '../lib/indexer.js'
+import searchEngineFactory from '../lib/searchEngine'
+import { indexDocumentIntoSearchEngine } from '../lib/indexer'
 import { writeFileSync } from 'fs'
 
 const indexId = '20201003T154758Z3667'
@@ -27,12 +27,19 @@ function getDocument(id) {
   return searchEngine.documentMap.get(id)
 }
 
-/** @type {{ id: string; parentId?: string; cost: number }[]} */
-const fringe = [{ id: indexId, parentId: undefined, cost: 0 }]
+const fringe: { id: string; parentId?: string; cost: number }[] = [
+  { id: indexId, parentId: undefined, cost: 0 },
+]
+
 const visitedSet = new Set()
-/** @typedef {{ id: string; title: string; children?: DocumentNode[] }} DocumentNode */
-/** @type {Map<string, DocumentNode>} */
-const nodeMap = new Map()
+
+interface DocumentNode {
+  id: string
+  title: string
+  children?: DocumentNode[]
+}
+
+const nodeMap = new Map<string, DocumentNode>()
 
 while (fringe.length > 0) {
   fringe.sort((a, b) => {
@@ -51,8 +58,7 @@ while (fringe.length > 0) {
   if (!document) {
     continue
   }
-  /** @type {DocumentNode} */
-  const node = {
+  const node: DocumentNode = {
     id,
     title: document.title.replace(/^#\s+/, '').replace(/[*\[\]]/g, ''),
   }
@@ -66,7 +72,10 @@ while (fringe.length > 0) {
   }
 
   console.log(item.cost, item.parentId || '-', id, document.title)
-  const links = (document.links || '').split(' ').filter(Boolean)
+  const links = (document.links || '')
+    .split(' ')
+    .map((x) => x.split('#')[0])
+    .filter(Boolean)
   const selfCost = document.topic ? 0 : 100
   for (const linkId of links) {
     if (visitedSet.has(linkId)) {

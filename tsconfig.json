@@ -7,7 +7,9 @@
     "strictFunctionTypes": true,
     "esModuleInterop": true,
     "checkJs": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "allowJs": true,
+    "noEmit": true
   },
   "exclude": ["node_modules", "**/node_modules/*"]
 }

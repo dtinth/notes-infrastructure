@@ -11,7 +11,7 @@ services:
     command:
       - bash
       - '-c'
-      - 'node --inspect=0.0.0.0 src/index.js'
+      - './node_modules/.bin/tsx --inspect=0.0.0.0 src/index.js'
     volumes:
       - ./.env:/usr/src/app/.env
       - ./.data:/usr/src/app/.data
