@@ -119,7 +119,7 @@ export function activate(context: vscode.ExtensionContext) {
         expiresIn: 5 * 86400,
       })
       vscode.env.openExternal(
-        vscode.Uri.parse('https://notes.dt.in.th/preview-' + jwt)
+        vscode.Uri.parse('https://notes.dt.in.th/private/' + jwt)
       )
     }),
     vscode.commands.registerCommand('dtinth-notes.search', async () => {
