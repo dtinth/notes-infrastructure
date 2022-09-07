@@ -30,4 +30,8 @@ module.exports = {
     BKivGCPOd9uFOGm2fE/iWV+GAOA14d6j.PDZ44oLssLVWe5z9oecnHKEMF8vT6+0WZD7fzuB
     /xSq1+woFocPCnGeyp/JWc40CrTpT8/k+UsiQPX3FaF9r3FHlBk05ORF2Z6and/jJq/hrwg==
   `),
+  googleUserId: encrypted(`
+    IqvQMaAcrazMqpbzmBGEfzUGR/dO7/cF.wLkUcmDHgUtdgVS5jk/iw//PHIndWDsiLMc547e
+    xm6pR0ebLF/3C
+  `),
 }

@@ -33,12 +33,14 @@ export function indexDocumentIntoSearchEngine(
     title += ' (topic)'
   }
   const id = path.basename(filename, '.md')
+  const names = new Set([id])
   if (frontmatter.aliases) {
     const aliases = Array.isArray(frontmatter.aliases)
       ? frontmatter.aliases
       : [frontmatter.aliases]
     for (const alias of aliases) {
       searchEngine.redirectMap.set(alias, id)
+      names.add(alias)
     }
   }
   let existingDocument = searchEngine.documentMap.get(id)
@@ -58,6 +60,7 @@ export function indexDocumentIntoSearchEngine(
     links: links.join(' '),
     excerpt: content.slice(0, 256),
     title,
+    names: [...names].join(' '),
   }
   searchEngine.minisearch.add(document)
   searchEngine.documentMap.set(id, document)

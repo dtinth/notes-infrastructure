@@ -4,11 +4,9 @@ const express = require('express')
 const glob = require('glob')
 const { createHash } = require('crypto')
 const app = express()
-const chokidar = require('chokidar')
 const jsonwebtoken = require('jsonwebtoken')
 const secrets = require('../secrets')
-const searchEngine = require('../lib/searchEngine').create()
-const { indexDocumentIntoSearchEngine } = require('../lib/indexer')
+const searchEngine = require('./store').searchEngine
 const importFresh = require('import-fresh')
 
 app.use(express.json())
@@ -173,29 +171,11 @@ function getGraph() {
   return graph
 }
 
-chokidar
-  .watch('data', {
-    ignored: /\.git/,
-    awaitWriteFinish: true,
-  })
-  .on('all', (event, path) => {
-    console.log(event, path)
-    if (event === 'add' || event === 'change') {
-      if (path.match(/^data\/(\w+)\.md$/)) {
-        indexDocumentIntoSearchEngine(
-          searchEngine,
-          path,
-          fs.readFileSync(path, 'utf8')
-        )
-      }
-    }
-  })
-
 app.use(express.static('public'))
 
 const server = http.createServer((req, res) => {
   if (req.url?.startsWith('/v2/')) {
-    import('./serverV2.mjs').then(async ({ app }) => {
+    import('./serverV2').then(async ({ app }) => {
       await app.ready()
       app.server.emit('request', req, res)
     })

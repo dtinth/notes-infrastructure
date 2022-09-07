@@ -2,30 +2,35 @@ import { randomUUID } from 'node:crypto'
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { Worker } from 'node:worker_threads'
 
-const defaultCreateLog = (id) => (entry) => {
+interface LogEntry {
+  level: 'DEBUG'
+  message: string
+}
+
+const defaultCreateLog = (id: string) => (entry: LogEntry) => {
   console.log(
     `[${new Date().toJSON()}] [${id}] [${entry.level}] ${entry.message}`
   )
 }
 
-export const createFileLog = (name) => {
+export const createFileLog = (name: string) => {
   const filename = `.data/logs/${name}.log`
   mkdirSync('.data/logs', { recursive: true })
   writeFileSync(filename, '')
-  return (id) => {
-    const write = (message) => {
+  return (id: string) => {
+    const write = (message: string) => {
       appendFileSync(filename, `[${new Date().toJSON()}] ${message}\n`)
     }
     write(`Start worker id: ${id}`)
-    return (entry) => {
+    return (entry: LogEntry) => {
       write(`[${entry.level}] ${entry.message}`)
     }
   }
 }
 
 export function runWorker(
-  filename,
-  data,
+  filename: string,
+  data: any,
   { createLog = defaultCreateLog } = {}
 ) {
   const id = randomUUID()

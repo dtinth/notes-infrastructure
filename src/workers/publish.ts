@@ -1,15 +1,14 @@
 import 'dotenv/config.js'
 import tar from 'tar'
-import { PassThrough, Readable } from 'stream'
+import { PassThrough } from 'stream'
 import { pipeline } from 'stream/promises'
-import searchEngineFactory from '../../lib/searchEngine.js'
-import { indexDocumentIntoSearchEngine } from '../../lib/indexer.js'
+import searchEngineFactory from '../../lib/searchEngine'
+import { indexDocumentIntoSearchEngine } from '../../lib/indexer'
 import { App } from 'octokit'
-import { spawn, spawnSync } from 'child_process'
 import { Storage } from '@google-cloud/storage'
 import { createHash } from 'crypto'
 import pMap from 'p-map'
-import { log, resolve } from '../../lib/workerLib.mjs'
+import { log, resolve } from '../../lib/workerLib'
 import { readFileSync } from 'fs'
 import { basename } from 'path'
 
@@ -29,7 +28,7 @@ async function* readTar(input, filter) {
     entryStream.end()
   })
   for await (const entry of entryStream) {
-    const buffers = []
+    const buffers: Buffer[] = []
     for await (const data of entry) {
       buffers.push(data)
     }
@@ -55,22 +54,12 @@ async function loadTar() {
     repo,
     ref: 'main',
   })
-  const ab = /** @type {ArrayBuffer} */ (result.data)
+  const ab = result.data as ArrayBuffer
   log(`Downloaded tarball archive of size ${ab.byteLength}`)
   return ab
 }
 
 async function loadPublicNotes() {
-  // spawnSync('cd data && git fetch origin main', {
-  //   shell: true,
-  //   stdio: 'inherit',
-  // })
-  // const data = spawn('cd data && git archive origin/main', {
-  //   shell: true,
-  //   stdio: ['ignore', 'pipe', 'inherit'],
-  // })
-  // const tarball = data.stdout
-
   const tarball = new PassThrough()
   tarball.end(Buffer.from(await loadTar()))
 
@@ -119,7 +108,7 @@ async function loadState() {
   if (!oldState.files) {
     oldState.files = {}
   }
-  return /** @type {PublishingState} */ (oldState)
+  return /** @type {PublishingState} */ oldState
 }
 
 async function main() {
@@ -168,7 +157,7 @@ async function main() {
     [
       ...Array.from(toUpload).map((id) => async () => {
         const file = bucket.file(`notes/public/${id}.md`)
-        await file.save(/** @type {Buffer} */ (sourceMap.get(id)))
+        await file.save(/** @type {Buffer} */ sourceMap.get(id))
         log('=> Uploaded: ' + id)
       }),
       ...Array.from(toDelete).map((id) => async () => {
