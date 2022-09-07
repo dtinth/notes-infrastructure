@@ -19,7 +19,8 @@
     "p-map": "^5.5.0",
     "stemmer": "^1.0.5",
     "stopwords": "^0.0.9",
-    "tar": "^6.1.11"
+    "tar": "^6.1.11",
+    "tsx": "^3.9.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.13",
