@@ -1,96 +1,45 @@
 import { execFileSync } from 'child_process'
 import searchEngineFactory from '../lib/searchEngine'
 import { indexDocumentIntoSearchEngine } from '../lib/indexer'
-import { writeFileSync } from 'fs'
+import {
+  DocumentRepository,
+  generatePublicIndex,
+} from '../lib/generatePublicIndex'
 
-const indexId = '20201003T154758Z3667'
-const searchEngine = searchEngineFactory.create()
-const indexedSet = new Set()
-function getContents(id) {
-  const contents = execFileSync('git', ['show', `HEAD:${id}.md`], {
-    encoding: 'utf-8',
-    cwd: 'data',
-  })
-  return contents
-}
-function getPath(id) {
-  return `data/${id}.md`
-}
-function getDocument(id) {
-  if (indexedSet.has(id)) {
-    return searchEngine.documentMap.get(id)
-  }
-  indexedSet.add(id)
-  indexDocumentIntoSearchEngine(searchEngine, getPath(id), getContents(id), {
-    publicOnly: true,
-  })
-  return searchEngine.documentMap.get(id)
+async function main() {
+  const result = await generatePublicIndex(new GitJournalRepository())
+  printToc(result.indexNode)
 }
 
-const fringe: { id: string; parentId?: string; cost: number }[] = [
-  { id: indexId, parentId: undefined, cost: 0 },
-]
+class GitJournalRepository implements DocumentRepository {
+  searchEngine = searchEngineFactory.create()
+  indexedSet = new Set()
 
-const visitedSet = new Set()
-
-interface DocumentNode {
-  id: string
-  title: string
-  children?: DocumentNode[]
-}
-
-const nodeMap = new Map<string, DocumentNode>()
-
-while (fringe.length > 0) {
-  fringe.sort((a, b) => {
-    return a.cost - b.cost
-  })
-  const item = fringe.shift()
-  if (!item) {
-    continue
-  }
-  const id = item.id
-  if (visitedSet.has(id)) {
-    continue
-  }
-  visitedSet.add(id)
-  const document = getDocument(id)
-  if (!document) {
-    continue
-  }
-  const node: DocumentNode = {
-    id,
-    title: document.title.replace(/^#\s+/, '').replace(/[*\[\]]/g, ''),
-  }
-  nodeMap.set(id, node)
-  if (item.parentId) {
-    const parentNode = nodeMap.get(item.parentId)
-    if (parentNode) {
-      parentNode.children = parentNode.children || []
-      parentNode.children.push(node)
-    }
-  }
-
-  console.log(item.cost, item.parentId || '-', id, document.title)
-  const links = (document.links || '')
-    .split(' ')
-    .map((x) => x.split('#')[0])
-    .filter(Boolean)
-  const selfCost = document.topic ? 0 : 100
-  for (const linkId of links) {
-    if (visitedSet.has(linkId)) {
-      continue
-    }
-    const linkCost = linkId === '20220130T173123Z7835' ? 10000 : 1
-    fringe.push({
-      id: linkId,
-      parentId: id,
-      cost: item.cost + selfCost + linkCost,
+  private getContents(id: string) {
+    const contents = execFileSync('git', ['show', `HEAD:${id}.md`], {
+      encoding: 'utf-8',
+      cwd: 'data',
     })
+    return contents
+  }
+  private getPath(id: string) {
+    return `data/${id}.md`
+  }
+  async getDocument(id: string) {
+    if (this.indexedSet.has(id)) {
+      return this.searchEngine.documentMap.get(id)
+    }
+    this.indexedSet.add(id)
+    indexDocumentIntoSearchEngine(
+      this.searchEngine,
+      this.getPath(id),
+      this.getContents(id),
+      { publicOnly: true }
+    )
+    return this.searchEngine.documentMap.get(id)
   }
 }
 
-const indexNode = nodeMap.get(indexId)
 function printToc(node, depth = 0) {
   if (!node) {
     return
@@ -102,5 +51,15 @@ function printToc(node, depth = 0) {
     }
   }
 }
-printToc(indexNode)
-writeFileSync('data/metadata/public.json', JSON.stringify(indexNode))
+
+main()
+
+// writeFileSync('data/metadata/public.json', JSON.stringify(indexNode))
+// writeFileSync(
+//   'data/metadata/public.index.json',
+//   JSON.stringify(searchEngine.minisearch)
+// )
+// writeFileSync(
+//   'data/metadata/public.docs.json',
+//   JSON.stringify(Object.fromEntries(searchEngine.documentMap))
+// )

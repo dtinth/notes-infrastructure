@@ -72,7 +72,10 @@ app.post('/v2/rename', async (request, reply) => {
           aliases: [...aliases],
         })
       }
-      const links = (document.links || '').split(' ').filter(Boolean)
+      const links = (document.links || '')
+        .split(' ')
+        .map((x) => x.split('#')[0])
+        .filter(Boolean)
       if (links.includes(from)) {
         operations.push({
           type: 'updateLink',

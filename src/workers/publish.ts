@@ -1,6 +1,6 @@
-import 'dotenv/config.js'
-import tar from 'tar'
-import { PassThrough } from 'stream'
+import 'dotenv/config'
+import tar, { ReadEntry } from 'tar'
+import { PassThrough, Readable } from 'stream'
 import { pipeline } from 'stream/promises'
 import searchEngineFactory from '../../lib/searchEngine'
 import { indexDocumentIntoSearchEngine } from '../../lib/indexer'
@@ -14,7 +14,9 @@ import { basename } from 'path'
 
 const bucket = new Storage().bucket('dtinth-notes.appspot.com')
 
-async function* readTar(input, filter) {
+type TarFilter = (path: string, entry: ReadEntry) => boolean
+
+async function* readTar(input: Readable, filter: TarFilter) {
   const entryStream = new PassThrough({ objectMode: true })
   const pipelinePromise = pipeline(
     input,
@@ -73,7 +75,7 @@ async function loadPublicNotes() {
 
   const filter = (path, entry) => {
     const name = basename(entry.path)
-    return entry.type === 'File' && name.match(/^[^/]+\.md$/)
+    return entry.type === 'File' && !!name.match(/^[^/]+\.md$/)
   }
 
   for await (const item of readTar(tarball, filter)) {
