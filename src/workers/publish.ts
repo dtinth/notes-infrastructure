@@ -2,7 +2,7 @@ import 'dotenv/config'
 import tar, { ReadEntry } from 'tar'
 import { PassThrough, Readable } from 'stream'
 import { pipeline } from 'stream/promises'
-import searchEngineFactory from '../../lib/searchEngine'
+import { createSearchEngine } from '../../lib/searchEngine'
 import { indexDocumentIntoSearchEngine } from '../../lib/indexer'
 import { App } from 'octokit'
 import { Storage } from '@google-cloud/storage'
@@ -11,6 +11,7 @@ import pMap from 'p-map'
 import { log, resolve } from '../../lib/workerLib'
 import { readFileSync } from 'fs'
 import { basename } from 'path'
+import { generatePublicIndex } from '../../lib/generatePublicIndex'
 
 const bucket = new Storage().bucket('dtinth-notes.appspot.com')
 
@@ -67,7 +68,7 @@ async function loadPublicNotes() {
 
   /** @type {Map<string, Buffer>} */
   const sourceMap = new Map()
-  const searchEngine = searchEngineFactory.create()
+  const searchEngine = createSearchEngine()
 
   let header = 'Indexing documents'
   let written = header.length
@@ -171,12 +172,35 @@ async function main() {
     (f) => f(),
     { concurrency: 16 }
   )
+
   if (JSON.stringify(oldState) !== JSON.stringify(newState)) {
     await bucket.file('notes/state.json').save(JSON.stringify(newState))
     log('=> Updated state')
   } else {
     log('=> No changes')
   }
+
+  const publicIndex = await generatePublicIndex({
+    repo: {
+      getDocument: async (id) => searchEngine.documentMap.get(id),
+    },
+    log,
+  })
+
+  log('Save search index')
+  await bucket
+    .file('notes/public/index.search.json')
+    .save(JSON.stringify(publicIndex.indexData))
+
+  log('Save sitemap')
+  await bucket.file('notes/public/index.txt').save(
+    publicIndex.ids
+      .map((id) => {
+        return `https://notes.dt.in.th/${id}`
+      })
+      .join('\n')
+  )
+
   resolve('ok')
 }
 

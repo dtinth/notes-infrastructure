@@ -48,8 +48,7 @@ export function indexDocumentIntoSearchEngine(
     searchEngine.minisearch.remove(existingDocument)
     searchEngine.documentMap.delete(id)
   }
-  /** @type {JournalDocument} */
-  const document = {
+  const document: JournalDocument = {
     id: id,
     public: !!frontmatter.public,
     topic: frontmatter.topic,

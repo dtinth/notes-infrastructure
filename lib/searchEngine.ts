@@ -1,13 +1,12 @@
-/** @type {typeof import('minisearch').default} */
-// @ts-ignore
-const MiniSearch = require('minisearch')
-const stemmer = require('stemmer')
-const stopwords = require('stopwords/english')
+import MiniSearch from 'minisearch'
+import stemmer from 'stemmer'
+import stopwords from 'stopwords/english'
+
 const englishStopwords = new Set(stopwords.english)
 englishStopwords.delete('vs')
 englishStopwords.delete('recent')
 
-const options = {
+export const searchEngineOptions = {
   idField: 'id',
   tokenize: (string, fieldName) => {
     try {
@@ -30,16 +29,12 @@ const options = {
     boost: { title: 3, link: 5, aka: 2 },
   },
 }
-module.exports = {
-  /**
-   * @returns {SearchEngine}
-   */
-  create() {
-    return {
-      minisearch: new MiniSearch(options),
-      documentMap: new Map(),
-      contentsMap: new Map(),
-      redirectMap: new Map(),
-    }
-  },
+
+export function createSearchEngine(): SearchEngine {
+  return {
+    minisearch: new MiniSearch(searchEngineOptions),
+    documentMap: new Map(),
+    contentsMap: new Map(),
+    redirectMap: new Map(),
+  }
 }

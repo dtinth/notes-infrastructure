@@ -43,7 +43,7 @@ app.post('/v2/github/webhook', async (request, reply) => {
   }).resultPromise
 })
 
-app.post('/v2/github/webhook-test', async (request, reply) => {
+app.post('/v2/publish', async (request, reply) => {
   return authenticate(request, reply, async () => {
     return await runWorker(getWorkerFile('publish.ts'), '', {
       createLog: createFileLog('publish'),

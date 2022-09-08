@@ -1,9 +1,9 @@
-import { create } from '../lib/searchEngine'
+import { createSearchEngine } from '../lib/searchEngine'
 import chokidar from 'chokidar'
 import { indexDocumentIntoSearchEngine } from '../lib/indexer'
 import fs from 'fs'
 
-export const searchEngine = create()
+export const searchEngine = createSearchEngine()
 
 chokidar
   .watch('data', {

@@ -1,5 +1,5 @@
 import { execFileSync } from 'child_process'
-import searchEngineFactory from '../lib/searchEngine'
+import { createSearchEngine } from '../lib/searchEngine'
 import { indexDocumentIntoSearchEngine } from '../lib/indexer'
 import {
   DocumentRepository,
@@ -7,12 +7,12 @@ import {
 } from '../lib/generatePublicIndex'
 
 async function main() {
-  const result = await generatePublicIndex(new GitJournalRepository())
+  const result = await generatePublicIndex({ repo: new GitJournalRepository() })
   printToc(result.indexNode)
 }
 
 class GitJournalRepository implements DocumentRepository {
-  searchEngine = searchEngineFactory.create()
+  searchEngine = createSearchEngine()
   indexedSet = new Set()
 
   private getContents(id: string) {

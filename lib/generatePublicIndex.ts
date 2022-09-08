@@ -1,8 +1,19 @@
+import MiniSearch from 'minisearch'
+import { searchEngineOptions } from './searchEngine'
+
 export interface DocumentRepository {
   getDocument(id: string): Promise<JournalDocument | undefined>
 }
 
-export async function generatePublicIndex(repo: DocumentRepository) {
+interface GeneratePublicIndexOptions {
+  repo: DocumentRepository
+  log?: (message: string) => void
+}
+
+export async function generatePublicIndex({
+  repo,
+  log = console.log,
+}: GeneratePublicIndexOptions) {
   const indexId = 'HomePage'
   const fringe: { id: string; parentId?: string; cost: number }[] = [
     { id: indexId, parentId: undefined, cost: 0 },
@@ -10,6 +21,8 @@ export async function generatePublicIndex(repo: DocumentRepository) {
 
   const visitedSet = new Set()
   const nodeMap = new Map<string, DocumentNode>()
+  const minisearch = new MiniSearch<JournalDocument>(searchEngineOptions)
+  const ids: string[] = []
 
   while (fringe.length > 0) {
     fringe.sort((a, b) => {
@@ -41,7 +54,7 @@ export async function generatePublicIndex(repo: DocumentRepository) {
       }
     }
 
-    console.log(item.cost, item.parentId || '-', id, document.title)
+    log(`${item.cost} ${item.parentId || '-'} ${id} ${document.title}`)
     const links = (document.links || '')
       .split(' ')
       .map((x) => x.split('#')[0])
@@ -58,9 +71,16 @@ export async function generatePublicIndex(repo: DocumentRepository) {
         cost: item.cost + selfCost + linkCost,
       })
     }
+
+    minisearch.add({ ...document, excerpt: '' })
+    ids.push(id)
   }
 
-  return { indexNode: nodeMap.get(indexId) }
+  return {
+    indexNode: nodeMap.get(indexId),
+    indexData: minisearch.toJSON(),
+    ids,
+  }
 }
 
 interface DocumentNode {
