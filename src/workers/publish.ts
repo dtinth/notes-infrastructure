@@ -125,18 +125,17 @@ async function main() {
   const toDelete = new Set()
   for (const [from, to] of searchEngine.redirectMap) {
     if (!sourceMap.has(from)) {
-      sourceMap.set(
-        from,
-        Buffer.from(
-          [
-            '---',
-            'public: true',
-            'redirect_to: ' + JSON.stringify(to),
-            '---',
-            `Redirect to [${to}](${to})`,
-          ].join('\n')
-        )
-      )
+      sourceMap.set(from, generateRedirect(to))
+    }
+  }
+  // Generate redirects from lowercased paths to the original paths
+  {
+    const ids = Array.from(sourceMap.keys())
+    for (const id of ids) {
+      const lowercased = id.toLowerCase()
+      if (lowercased !== id && !sourceMap.has(lowercased)) {
+        sourceMap.set(lowercased, generateRedirect(id))
+      }
     }
   }
   for (const [id, source] of sourceMap) {
@@ -205,3 +204,14 @@ async function main() {
 }
 
 main()
+function generateRedirect(to: string): any {
+  return Buffer.from(
+    [
+      '---',
+      'public: true',
+      'redirect_to: ' + JSON.stringify(to),
+      '---',
+      `Redirect to [${to}](${to})`,
+    ].join('\n')
+  )
+}
