@@ -10,5 +10,5 @@ const stats = execSync('git diff --stat --staged')
 if (stats) {
   execSync('git commit -m "' + stats + '"', { stdio: 'inherit' })
 }
-execSync('git pull --no-ff', { stdio: 'inherit' })
+execSync('git pull --no-ff --no-edit', { stdio: 'inherit' })
 execSync('git push', { stdio: 'inherit' })

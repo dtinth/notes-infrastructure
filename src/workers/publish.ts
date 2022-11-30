@@ -12,6 +12,7 @@ import { log, resolve } from '../../lib/workerLib'
 import { readFileSync } from 'fs'
 import { basename } from 'path'
 import { generatePublicIndex } from '../../lib/generatePublicIndex'
+import * as Minio from 'minio'
 
 const bucket = new Storage().bucket('dtinth-notes.appspot.com')
 
@@ -190,6 +191,7 @@ async function main() {
   await bucket
     .file('notes/public/index.search.json')
     .save(JSON.stringify(publicIndex.indexData))
+  await saveIndexFileToOci(JSON.stringify(publicIndex.indexData))
 
   log('Save sitemap')
   await bucket.file('notes/public/index.txt').save(
@@ -214,4 +216,18 @@ function generateRedirect(to: string): any {
       `Redirect to [${to}](${to})`,
     ].join('\n')
   )
+}
+
+async function saveIndexFileToOci(data: string) {
+  const minioClient = new Minio.Client({
+    endPoint:
+      'axioqr1tqh1r.compat.objectstorage.ap-singapore-1.oraclecloud.com',
+    useSSL: true,
+    accessKey: process.env.OCI_ACCESS_KEY_ID!,
+    secretKey: process.env.OCI_SECRET_ACCESS_KEY!,
+  })
+  await minioClient.putObject('dtinth-notes', 'index.search.json', data, {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'max-age=300',
+  })
 }
