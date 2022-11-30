@@ -14,6 +14,9 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "markdown.previewScripts": [
+      "./markdown.js"
+    ],
     "commands": [
       {
         "command": "dtinth-notes.add",

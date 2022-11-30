@@ -27,5 +27,8 @@
       }
     }
   },
-  "vscodeMarkdownNotes.allowPipedWikiLinks": true
+  "vscodeMarkdownNotes.allowPipedWikiLinks": true,
+  "markdown.styles": [
+    "https://cdn.jsdelivr.net/combine/npm/water.css@2.0/out/dark.min.css,gh/dtinth/dtinth-water@v0.3.0/dtinth-water.min.css"
+  ]
 }
