@@ -83,7 +83,7 @@ export async function generatePublicIndex({
   }
 }
 
-interface DocumentNode {
+export interface DocumentNode {
   id: string
   title: string
   children?: DocumentNode[]

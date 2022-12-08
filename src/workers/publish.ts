@@ -188,10 +188,10 @@ async function main() {
   })
 
   log('Save search index')
-  await bucket
-    .file('notes/public/index.search.json')
-    .save(JSON.stringify(publicIndex.indexData))
-  await saveIndexFileToOci(JSON.stringify(publicIndex.indexData))
+  await uploadPublic('index.search.json', JSON.stringify(publicIndex.indexData))
+
+  log('Save tree')
+  await uploadPublic('index.tree.json', JSON.stringify(publicIndex.indexNode))
 
   log('Save sitemap')
   await bucket.file('notes/public/index.txt').save(
@@ -218,7 +218,10 @@ function generateRedirect(to: string): any {
   )
 }
 
-async function saveIndexFileToOci(data: string) {
+async function uploadToGcs(name: string, contents: string) {
+  return await bucket.file('notes/public/' + name).save(contents)
+}
+async function uploadToOci(name: string, contents: string) {
   const minioClient = new Minio.Client({
     endPoint:
       'axioqr1tqh1r.compat.objectstorage.ap-singapore-1.oraclecloud.com',
@@ -226,8 +229,11 @@ async function saveIndexFileToOci(data: string) {
     accessKey: process.env.OCI_ACCESS_KEY_ID!,
     secretKey: process.env.OCI_SECRET_ACCESS_KEY!,
   })
-  await minioClient.putObject('dtinth-notes', 'index.search.json', data, {
+  await minioClient.putObject('dtinth-notes', name, contents, {
     'Content-Type': 'application/json',
     'Cache-Control': 'max-age=300',
   })
+}
+async function uploadPublic(name: string, contents: string) {
+  return Promise.all([uploadToGcs(name, contents), uploadToOci(name, contents)])
 }
