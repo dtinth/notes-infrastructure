@@ -1,8 +1,11 @@
 import Fastify, { FastifyReply, FastifyRequest } from 'fastify'
+import { decodeJwt } from 'jose'
 import { createFileLog, runWorker } from '../lib/workerClient'
 import secrets from '../secrets'
-import { validateJwt } from './googleAuth'
+import { firebaseIssuer, validateFirebaseJwt } from './firebaseAuth'
+import { validateGoogleJwt } from './googleAuth'
 import { searchEngine } from './store'
+import cors from '@fastify/cors'
 
 export const app = Fastify({
   logger: true,
@@ -21,12 +24,22 @@ async function authenticate<T>(
   if (token === secrets.apiToken) {
     return f()
   }
-  const { payload } = await validateJwt(token)
-  if (payload.sub !== secrets.googleUserId) {
-    reply.status(403)
-    return 'forbidden'
+  const iss = decodeJwt(token).iss
+  if (iss === firebaseIssuer) {
+    const { payload } = await validateFirebaseJwt(token)
+    if (payload.sub !== secrets.firebaseUserId) {
+      reply.status(403)
+      return 'forbidden'
+    }
+    return f()
+  } else {
+    const { payload } = await validateGoogleJwt(token)
+    if (payload.sub !== secrets.googleUserId) {
+      reply.status(403)
+      return 'forbidden'
+    }
+    return f()
   }
-  return f()
 }
 
 app.get('/v2/hello', async () => {
@@ -88,5 +101,21 @@ app.post('/v2/rename', async (request, reply) => {
       to: body.to,
       operations,
     }
+  })
+})
+
+app.register(async (app) => {
+  await app.register(cors)
+
+  app.get('/v2/info', async (request, reply) => {
+    return authenticate(request, reply, async () => {
+      reply.header('Access-Control-Allow-Origin', '*')
+      const file = String((request.query as any).slug)
+      const owner = String(process.env.VAULT_OWNER)
+      const repo = String(process.env.VAULT_REPO)
+      return {
+        editUrl: `https://github.com/${owner}/${repo}/edit/main/${file}.md`,
+      }
+    })
   })
 })

@@ -34,4 +34,8 @@ module.exports = {
     IqvQMaAcrazMqpbzmBGEfzUGR/dO7/cF.wLkUcmDHgUtdgVS5jk/iw//PHIndWDsiLMc547e
     xm6pR0ebLF/3C
   `),
+  firebaseUserId: encrypted(`
+    CxFE85JrXdTGGMxcjUXKQgJ3g/sfaNlQ.BvZdfo4kxuSee1AgmLwP0dKYZovC0OBpkyPuQCV
+    f0pArdd9Nl6xbsDNJKsLnOA==
+  `),
 }
