@@ -6,6 +6,7 @@ import { firebaseIssuer, validateFirebaseJwt } from './firebaseAuth'
 import { validateGoogleJwt } from './googleAuth'
 import { searchEngine } from './store'
 import cors from '@fastify/cors'
+import * as jsonwebtoken from 'jsonwebtoken'
 
 export const app = Fastify({
   logger: true,
@@ -107,6 +108,14 @@ app.post('/v2/rename', async (request, reply) => {
 app.register(async (app) => {
   await app.register(cors)
 
+  const getPrivateToken = (id: string) => {
+    const jwt = jsonwebtoken.sign({ id }, secrets.previewSigningSecret, {
+      algorithm: 'HS256',
+      expiresIn: 5 * 86400,
+    })
+    return jwt
+  }
+
   app.get('/v2/info', async (request, reply) => {
     return authenticate(request, reply, async () => {
       reply.header('Access-Control-Allow-Origin', '*')
@@ -115,6 +124,7 @@ app.register(async (app) => {
       const repo = String(process.env.VAULT_REPO)
       return {
         editUrl: `https://github.com/${owner}/${repo}/edit/main/${file}.md`,
+        privateToken: getPrivateToken(file),
       }
     })
   })
