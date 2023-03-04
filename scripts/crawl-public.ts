@@ -1,46 +1,15 @@
-import { execFileSync } from 'child_process'
-import { createSearchEngine } from '../lib/searchEngine'
-import { indexDocumentIntoSearchEngine } from '../lib/indexer'
 import {
-  DocumentRepository,
+  DocumentNode,
   generatePublicIndex,
+  GitJournalRepository,
 } from '../lib/generatePublicIndex'
 
 async function main() {
   const result = await generatePublicIndex({ repo: new GitJournalRepository() })
-  printToc(result.indexNode)
+  printToc(result.indexNode!)
 }
 
-class GitJournalRepository implements DocumentRepository {
-  searchEngine = createSearchEngine()
-  indexedSet = new Set()
-
-  private getContents(id: string) {
-    const contents = execFileSync('git', ['show', `HEAD:${id}.md`], {
-      encoding: 'utf-8',
-      cwd: 'data',
-    })
-    return contents
-  }
-  private getPath(id: string) {
-    return `data/${id}.md`
-  }
-  async getDocument(id: string) {
-    if (this.indexedSet.has(id)) {
-      return this.searchEngine.documentMap.get(id)
-    }
-    this.indexedSet.add(id)
-    indexDocumentIntoSearchEngine(
-      this.searchEngine,
-      this.getPath(id),
-      this.getContents(id),
-      { publicOnly: true }
-    )
-    return this.searchEngine.documentMap.get(id)
-  }
-}
-
-function printToc(node, depth = 0) {
+function printToc(node: DocumentNode, depth = 0) {
   if (!node) {
     return
   }

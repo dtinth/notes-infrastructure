@@ -23,6 +23,7 @@ app.get('/entry', async (req, res, next) => {
     const id = String(data.id).replace(/\W/g, '')
     res.json({
       data: fs.readFileSync('data/' + id + '.md', 'utf8'),
+      exp: data.exp,
     })
   } catch (error) {
     next(error)

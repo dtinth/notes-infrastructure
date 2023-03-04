@@ -1,5 +1,7 @@
+import { execFileSync } from 'child_process'
 import MiniSearch from 'minisearch'
-import { searchEngineOptions } from './searchEngine'
+import { indexDocumentIntoSearchEngine } from './indexer'
+import { createSearchEngine, searchEngineOptions } from './searchEngine'
 
 export interface DocumentRepository {
   getDocument(id: string): Promise<JournalDocument | undefined>
@@ -87,4 +89,33 @@ export interface DocumentNode {
   id: string
   title: string
   children?: DocumentNode[]
+}
+
+export class GitJournalRepository implements DocumentRepository {
+  searchEngine = createSearchEngine()
+  indexedSet = new Set()
+
+  private getContents(id: string) {
+    const contents = execFileSync('git', ['show', `HEAD:${id}.md`], {
+      encoding: 'utf-8',
+      cwd: 'data',
+    })
+    return contents
+  }
+  private getPath(id: string) {
+    return `data/${id}.md`
+  }
+  async getDocument(id: string) {
+    if (this.indexedSet.has(id)) {
+      return this.searchEngine.documentMap.get(id)
+    }
+    this.indexedSet.add(id)
+    indexDocumentIntoSearchEngine(
+      this.searchEngine,
+      this.getPath(id),
+      this.getContents(id),
+      { publicOnly: true }
+    )
+    return this.searchEngine.documentMap.get(id)
+  }
 }

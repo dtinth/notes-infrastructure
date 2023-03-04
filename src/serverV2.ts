@@ -7,6 +7,9 @@ import { validateGoogleJwt } from './googleAuth'
 import { searchEngine } from './store'
 import cors from '@fastify/cors'
 import * as jsonwebtoken from 'jsonwebtoken'
+import { z } from 'zod'
+import fs from 'fs'
+import { createHash } from 'crypto'
 
 export const app = Fastify({
   logger: true,
@@ -126,6 +129,60 @@ app.register(async (app) => {
         editUrl: `https://github.com/${owner}/${repo}/edit/main/${file}.md`,
         privateToken: getPrivateToken(file),
       }
+    })
+  })
+
+  const syncSchema = z.object({
+    id: z.string().min(1).regex(/^\w+$/),
+    write: z
+      .object({
+        contents: z.string(),
+        lastSynchronizedHash: z.string().nullish(),
+      })
+      .optional(),
+  })
+  app.post('/v2/synchronize', async (request, reply) => {
+    const body = syncSchema.parse(request.body)
+    return authenticate(request, reply, async () => {
+      const filePath = 'data/' + body.id + '.md'
+
+      const currentContents = fs.existsSync(filePath)
+        ? fs.readFileSync(filePath)
+        : null
+      const currentHash = currentContents
+        ? createHash('sha1').update(currentContents).digest('hex')
+        : null
+
+      const result = {
+        written: false,
+        status: 'Retrieved note entry',
+        contents: currentContents?.toString('utf8'),
+        hash: currentHash,
+      }
+
+      if (body.write) {
+        const newContents = Buffer.from(body.write.contents)
+        const newHash = createHash('sha1').update(newContents).digest('hex')
+        if (currentHash && newHash === currentHash) {
+          result.status = 'Already up-to-date'
+          result.written = true
+        } else if (
+          currentHash &&
+          currentHash !== body.write.lastSynchronizedHash
+        ) {
+          result.status = 'Data conflict'
+        } else if (body.write.lastSynchronizedHash && !currentHash) {
+          result.status = 'Removed from here'
+        } else {
+          result.status = 'Saved'
+          result.written = true
+          fs.writeFileSync(filePath, newContents)
+          result.contents = newContents.toString('utf8')
+          result.hash = newHash
+        }
+      }
+
+      return result
     })
   })
 })

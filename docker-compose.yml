@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     build: .
     init: true
-    user: '1000:1000'
+    user: '1001:1001'
     ports:
       - 127.0.0.1:21001:21001
       - 127.0.0.1:9229:9229
