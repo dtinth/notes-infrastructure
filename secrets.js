@@ -38,4 +38,9 @@ module.exports = {
     CxFE85JrXdTGGMxcjUXKQgJ3g/sfaNlQ.BvZdfo4kxuSee1AgmLwP0dKYZovC0OBpkyPuQCV
     f0pArdd9Nl6xbsDNJKsLnOA==
   `),
+  vscodeDevUrl: encrypted(`
+    BmILs8BoIUUnLYz4OnBG6wuwMoMoW9dT.7rGJUYASbUaaF9LR8hlYR5P2u2+CgrjXE0NZJMC
+    Vj11ZMGeOd++vUmOj0/PdPy0ORsR5nQagzye5RFn8W3z9Xnt2kJ4pGDD5z52x8yg4JmiEa7f
+    Y+mMhew09zZKwFyEFMC8DGRQ=
+  `),
 }

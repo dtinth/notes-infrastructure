@@ -128,6 +128,7 @@ app.register(async (app) => {
       return {
         editUrl: `https://github.com/${owner}/${repo}/edit/main/${file}.md`,
         privateToken: getPrivateToken(file),
+        vscodeDevUrl: secrets.vscodeDevUrl,
       }
     })
   })
