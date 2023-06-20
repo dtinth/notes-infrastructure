@@ -15,6 +15,7 @@ import { generatePublicIndex } from '../../lib/generatePublicIndex'
 import * as Minio from 'minio'
 import { createClient } from '@supabase/supabase-js'
 import { GoogleAuth } from 'google-auth-library'
+import axios from 'axios'
 
 const bucket = new Storage().bucket('dtinth-notes.appspot.com')
 const supabase = createClient(
@@ -154,23 +155,15 @@ async function main() {
     'https://notes.dt.in.th'
   )
   const revalidate = async (id: string) => {
-    const response = await fetch(
+    const response = await axios.post(
       'https://notes.dt.in.th/api/revalidate?path=/' + id,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${serviceAccountIdToken}`,
-        },
-      }
+      {},
+      { headers: { Authorization: `Bearer ${serviceAccountIdToken}` } }
     )
-    if (!response.ok) {
+    if (!response.data.revalidated) {
       throw new Error(
-        `Unable to revalidate ${id}: ${response.status} ${response.statusText}`
+        `Unable to revalidate ${id}: ${JSON.stringify(response.data)}`
       )
-    }
-    const data = await response.json()
-    if (!data.revalidated) {
-      throw new Error(`Unable to revalidate ${id}: ${JSON.stringify(data)}`)
     }
     log('=> Revalidated: ' + id)
   }
