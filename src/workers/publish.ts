@@ -5,19 +5,16 @@ import { pipeline } from 'stream/promises'
 import { createSearchEngine } from '../../lib/searchEngine'
 import { indexDocumentIntoSearchEngine } from '../../lib/indexer'
 import { App } from 'octokit'
-import { Storage } from '@google-cloud/storage'
 import { createHash } from 'crypto'
 import pMap from 'p-map'
 import { log, resolve } from '../../lib/workerLib'
 import { readFileSync } from 'fs'
 import { basename } from 'path'
 import { generatePublicIndex } from '../../lib/generatePublicIndex'
-import * as Minio from 'minio'
 import { createClient } from '@supabase/supabase-js'
 import { GoogleAuth } from 'google-auth-library'
 import axios from 'axios'
 
-const bucket = new Storage().bucket('dtinth-notes.appspot.com')
 const supabase = createClient(
   'https://htrqhjrmmqrqaccchyne.supabase.co',
   process.env.SUPABASE_API_KEY!
@@ -113,10 +110,6 @@ async function loadPublicNotes() {
 }
 
 async function loadState() {
-  // const oldState = JSON.parse(
-  //   (await bucket.file('notes/state.json').download())[0].toString()
-  // )
-  // const oldState: PublishingState = { files: {} }
   const { data, error } = await supabase.storage
     .from('notes-private')
     .download('state.json')
@@ -130,15 +123,6 @@ async function loadState() {
 
 async function main() {
   const { searchEngine, sourceMap } = await loadPublicNotes()
-
-  // {
-  //   const id = 'HDRQRCode'
-  //   const file = bucket.file(`notes/public/${id}.md`)
-  //   await file.save(/** @type {Buffer} */ sourceMap.get(id))
-  //   log('=> Uploaded: ' + id)
-  //   return
-  // }
-
   const oldState = await loadState()
   const newState = JSON.parse(JSON.stringify(oldState))
 
@@ -198,16 +182,6 @@ async function main() {
   await pMap(
     [
       ...Array.from(toUpload).map((id) => async () => {
-        const file = bucket.file(`notes/public/${id}.md`)
-        await file.save(/** @type {Buffer} */ sourceMap.get(id))
-        log('=> Uploaded (GCS): ' + id)
-      }),
-      ...Array.from(toDelete).map((id) => async () => {
-        const file = bucket.file(`notes/public/${id}.md`)
-        await file.delete()
-        log('=> Deleted (GCS): ' + id)
-      }),
-      ...Array.from(toUpload).map((id) => async () => {
         const { data, error } = await supabase
           .from('notes')
           .upsert({ id, contents: sourceMap.get(id).toString() })
@@ -229,7 +203,6 @@ async function main() {
   )
 
   if (JSON.stringify(oldState) !== JSON.stringify(newState)) {
-    await bucket.file('notes/state.json').save(JSON.stringify(newState))
     await supabase.storage
       .from('notes-private')
       .upload('state.json', Buffer.from(JSON.stringify(newState)), {
@@ -249,13 +222,19 @@ async function main() {
   })
 
   log('Save search index')
-  await uploadPublic('index.search.json', JSON.stringify(publicIndex.indexData))
+  await uploadToSupabasePublic(
+    'index.search.json',
+    JSON.stringify(publicIndex.indexData)
+  )
 
   log('Save tree')
-  await uploadPublic('index.tree.json', JSON.stringify(publicIndex.indexNode))
+  await uploadToSupabasePublic(
+    'index.tree.json',
+    JSON.stringify(publicIndex.indexNode)
+  )
 
   log('Save sitemap')
-  await uploadToSupabase(
+  await uploadToSupabasePublic(
     'index.txt',
     publicIndex.ids
       .map((id) => {
@@ -263,14 +242,6 @@ async function main() {
       })
       .join('\n')
   )
-  await bucket.file('notes/public/index.txt').save(
-    publicIndex.ids
-      .map((id) => {
-        return `https://notes.dt.in.th/${id}`
-      })
-      .join('\n')
-  )
-
   resolve('ok')
 }
 
@@ -287,39 +258,13 @@ function generateRedirect(to: string): any {
   )
 }
 
-async function uploadToGcs(name: string, contents: string) {
-  return await bucket.file('notes/public/' + name).save(contents)
-}
-async function uploadToSupabase(name: string, contents: string) {
+async function uploadToSupabasePublic(name: string, contents: string) {
   const { data, error } = await supabase.storage
     .from('notes-public')
     .upload(name, Buffer.from(contents), { cacheControl: '60', upsert: true })
   if (error) throw error
 }
-async function uploadToOci(name: string, contents: string) {
-  const minioClient = new Minio.Client({
-    endPoint:
-      'axioqr1tqh1r.compat.objectstorage.ap-singapore-1.oraclecloud.com',
-    useSSL: true,
-    accessKey: process.env.OCI_ACCESS_KEY_ID!,
-    secretKey: process.env.OCI_SECRET_ACCESS_KEY!,
-  })
-  await minioClient.putObject('dtinth-notes', name, contents, {
-    'Content-Type': 'application/json',
-    'Cache-Control': 'max-age=300',
-  })
-}
-async function uploadPublic(name: string, contents: string) {
-  return Promise.all([
-    uploadToGcs(name, contents),
-    uploadToOci(name, contents),
-    uploadToSupabase(name, contents),
-  ])
-}
 
-/**
- * @param {string} audience
- */
 async function getServiceAccountIdToken(audience: string) {
   const auth = new GoogleAuth()
   const client = await auth.getClient()
