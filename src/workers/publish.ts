@@ -13,8 +13,14 @@ import { readFileSync } from 'fs'
 import { basename } from 'path'
 import { generatePublicIndex } from '../../lib/generatePublicIndex'
 import * as Minio from 'minio'
+import { createClient } from '@supabase/supabase-js'
+import { GoogleAuth } from 'google-auth-library'
 
 const bucket = new Storage().bucket('dtinth-notes.appspot.com')
+const supabase = createClient(
+  'https://htrqhjrmmqrqaccchyne.supabase.co',
+  process.env.SUPABASE_API_KEY!
+)
 
 type TarFilter = (path: string, entry: ReadEntry) => boolean
 
@@ -106,9 +112,15 @@ async function loadPublicNotes() {
 }
 
 async function loadState() {
-  const oldState = JSON.parse(
-    (await bucket.file('notes/state.json').download())[0].toString()
-  )
+  // const oldState = JSON.parse(
+  //   (await bucket.file('notes/state.json').download())[0].toString()
+  // )
+  // const oldState: PublishingState = { files: {} }
+  const { data, error } = await supabase.storage
+    .from('notes-private')
+    .download('state.json')
+  if (error) throw error
+  const oldState = JSON.parse(await data.text())
   if (!oldState.files) {
     oldState.files = {}
   }
@@ -116,19 +128,53 @@ async function loadState() {
 }
 
 async function main() {
-  const oldState = await loadState()
-  const newState = JSON.parse(JSON.stringify(oldState))
   const { searchEngine, sourceMap } = await loadPublicNotes()
 
-  /** @type {Map<string, string>} */
-  const hashMap = new Map()
-  const toUpload = new Set()
-  const toDelete = new Set()
+  // {
+  //   const id = 'HDRQRCode'
+  //   const file = bucket.file(`notes/public/${id}.md`)
+  //   await file.save(/** @type {Buffer} */ sourceMap.get(id))
+  //   log('=> Uploaded: ' + id)
+  //   return
+  // }
+
+  const oldState = await loadState()
+  const newState = JSON.parse(JSON.stringify(oldState))
+
+  const hashMap = new Map<string, string>()
+  const toUpload = new Set<string>()
+  const toDelete = new Set<string>()
   for (const [from, to] of searchEngine.redirectMap) {
     if (!sourceMap.has(from)) {
       sourceMap.set(from, generateRedirect(to))
     }
   }
+
+  const serviceAccountIdToken = await getServiceAccountIdToken(
+    'https://notes.dt.in.th'
+  )
+  const revalidate = async (id: string) => {
+    const response = await fetch(
+      'https://notes.dt.in.th/api/revalidate?path=/' + id,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${serviceAccountIdToken}`,
+        },
+      }
+    )
+    if (!response.ok) {
+      throw new Error(
+        `Unable to revalidate ${id}: ${response.status} ${response.statusText}`
+      )
+    }
+    const data = await response.json()
+    if (!data.revalidated) {
+      throw new Error(`Unable to revalidate ${id}: ${JSON.stringify(data)}`)
+    }
+    log('=> Revalidated: ' + id)
+  }
+
   // Generate redirects from lowercased paths to the original paths
   {
     const ids = Array.from(sourceMap.keys())
@@ -161,12 +207,28 @@ async function main() {
       ...Array.from(toUpload).map((id) => async () => {
         const file = bucket.file(`notes/public/${id}.md`)
         await file.save(/** @type {Buffer} */ sourceMap.get(id))
-        log('=> Uploaded: ' + id)
+        log('=> Uploaded (GCS): ' + id)
       }),
       ...Array.from(toDelete).map((id) => async () => {
         const file = bucket.file(`notes/public/${id}.md`)
         await file.delete()
-        log('=> Deleted: ' + id)
+        log('=> Deleted (GCS): ' + id)
+      }),
+      ...Array.from(toUpload).map((id) => async () => {
+        const { data, error } = await supabase
+          .from('notes')
+          .upsert({ id, contents: sourceMap.get(id).toString() })
+        if (error) throw new Error(JSON.stringify(error))
+        log('=> Uploaded (Supabase): ' + id)
+        await revalidate(id)
+      }),
+      ...Array.from(toDelete).map((id) => async () => {
+        const { data, error } = await supabase
+          .from('notes')
+          .delete()
+          .match({ id })
+        if (error) throw new Error(JSON.stringify(error))
+        log('=> Deleted (Supabase): ' + id)
       }),
     ],
     (f) => f(),
@@ -175,6 +237,12 @@ async function main() {
 
   if (JSON.stringify(oldState) !== JSON.stringify(newState)) {
     await bucket.file('notes/state.json').save(JSON.stringify(newState))
+    await supabase.storage
+      .from('notes-private')
+      .upload('state.json', Buffer.from(JSON.stringify(newState)), {
+        cacheControl: '1',
+        upsert: true,
+      })
     log('=> Updated state')
   } else {
     log('=> No changes')
@@ -194,6 +262,14 @@ async function main() {
   await uploadPublic('index.tree.json', JSON.stringify(publicIndex.indexNode))
 
   log('Save sitemap')
+  await uploadToSupabase(
+    'index.txt',
+    publicIndex.ids
+      .map((id) => {
+        return `https://notes.dt.in.th/${id}`
+      })
+      .join('\n')
+  )
   await bucket.file('notes/public/index.txt').save(
     publicIndex.ids
       .map((id) => {
@@ -221,6 +297,12 @@ function generateRedirect(to: string): any {
 async function uploadToGcs(name: string, contents: string) {
   return await bucket.file('notes/public/' + name).save(contents)
 }
+async function uploadToSupabase(name: string, contents: string) {
+  const { data, error } = await supabase.storage
+    .from('notes-public')
+    .upload(name, Buffer.from(contents), { cacheControl: '60', upsert: true })
+  if (error) throw error
+}
 async function uploadToOci(name: string, contents: string) {
   const minioClient = new Minio.Client({
     endPoint:
@@ -235,5 +317,20 @@ async function uploadToOci(name: string, contents: string) {
   })
 }
 async function uploadPublic(name: string, contents: string) {
-  return Promise.all([uploadToGcs(name, contents), uploadToOci(name, contents)])
+  return Promise.all([
+    uploadToGcs(name, contents),
+    uploadToOci(name, contents),
+    uploadToSupabase(name, contents),
+  ])
+}
+
+/**
+ * @param {string} audience
+ */
+async function getServiceAccountIdToken(audience: string) {
+  const auth = new GoogleAuth()
+  const client = await auth.getClient()
+  if (!('fetchIdToken' in client)) throw new Error('No fetchIdToken')
+  const token = await client.fetchIdToken(audience)
+  return token
 }
