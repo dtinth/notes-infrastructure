@@ -10,10 +10,14 @@ import pMap from 'p-map'
 import { log, resolve } from '../../lib/workerLib'
 import { readFileSync } from 'fs'
 import { basename } from 'path'
-import { generatePublicIndex } from '../../lib/generatePublicIndex'
+import {
+  DocumentRepository,
+  generatePublicIndex,
+} from '../../lib/generatePublicIndex'
 import { createClient } from '@supabase/supabase-js'
 import { GoogleAuth } from 'google-auth-library'
 import axios from 'axios'
+import { generateSitegraph } from '../../lib/generateSitegraph'
 
 const supabase = createClient(
   'https://htrqhjrmmqrqaccchyne.supabase.co',
@@ -214,12 +218,11 @@ async function main() {
     log('=> No changes')
   }
 
-  const publicIndex = await generatePublicIndex({
-    repo: {
-      getDocument: async (id) => searchEngine.documentMap.get(id),
-    },
-    log,
-  })
+  const repo: DocumentRepository = {
+    getDocument: async (id) => searchEngine.documentMap.get(id),
+  }
+  const publicIndex = await generatePublicIndex({ repo, log })
+  const sitegraph = await generateSitegraph({ publicIndex, repo })
 
   log('Save search index')
   await uploadToSupabasePublic(
@@ -232,6 +235,9 @@ async function main() {
     'index.tree.json',
     JSON.stringify(publicIndex.indexNode)
   )
+
+  log('Save graph')
+  await uploadToSupabasePublic('index.graph.json', JSON.stringify(sitegraph))
 
   log('Save sitemap')
   await uploadToSupabasePublic(

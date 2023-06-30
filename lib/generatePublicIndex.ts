@@ -12,10 +12,16 @@ interface GeneratePublicIndexOptions {
   log?: (message: string) => void
 }
 
+export interface PublicIndex {
+  indexNode: DocumentNode
+  indexData: any
+  ids: string[]
+}
+
 export async function generatePublicIndex({
   repo,
   log = console.log,
-}: GeneratePublicIndexOptions) {
+}: GeneratePublicIndexOptions): Promise<PublicIndex> {
   const indexId = 'HomePage'
   const fringe: { id: string; parentId?: string; cost: number }[] = [
     { id: indexId, parentId: undefined, cost: 0 },
@@ -79,7 +85,7 @@ export async function generatePublicIndex({
   }
 
   return {
-    indexNode: nodeMap.get(indexId),
+    indexNode: nodeMap.get(indexId)!,
     indexData: minisearch.toJSON(),
     ids,
   }
