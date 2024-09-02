@@ -12,18 +12,18 @@ export function indexNote(
   slug: string,
   source: string,
   options: IndexOptions = {}
-) {
+): boolean {
   notesDatabase.identitySet.add(slug)
 
   const existingDocument = notesDatabase.documentMap.get(slug)
   if (existingDocument) {
     const existingSource = notesDatabase.contentsMap.get(slug)
-    if (existingSource === source) return
+    if (existingSource === source) return false
   }
 
   let { data: frontMatter, content } = parseFrontmatter(source)
   if (!frontMatter.public && options.publicOnly) {
-    return
+    return false
   }
   const markdownContent = new MarkdownContent(content)
   const links: string[] = markdownContent.links.filter((l) => !l.includes(':'))
@@ -68,7 +68,16 @@ export function indexNote(
   notesDatabase.contentsMap.set(slug, source)
   if (existingDocument) {
     notesDatabase.minisearch.remove(existingDocument)
-    notesDatabase.minisearch.add(document)
   }
   notesDatabase.minisearch.add(document)
+  return true
+}
+
+export function unindexNote(notesDatabase: NotesDatabase, slug: string) {
+  const document = notesDatabase.documentMap.get(slug)
+  if (!document) return
+  notesDatabase.documentMap.delete(slug)
+  notesDatabase.contentsMap.delete(slug)
+  notesDatabase.identitySet.delete(slug)
+  notesDatabase.minisearch.remove(document)
 }

@@ -1,0 +1,7 @@
+GET http://127.0.0.1:21024/private/tree
+Authorization: Bearer {{$dotenv NOTES_API_KEY}}
+
+###
+
+GET http://127.0.0.1:21024/private/sitegraph
+Authorization: Bearer {{$dotenv NOTES_API_KEY}}

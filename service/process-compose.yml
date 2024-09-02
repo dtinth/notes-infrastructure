@@ -1,0 +1,6 @@
+processes:
+  server:
+    description: Notes server
+    command: 'bun --env-file=.env run --watch scripts/start_notes_server.ts'
+    availability:
+      restart: on_failure
