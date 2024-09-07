@@ -77,6 +77,16 @@ class StaticSiteGenerator {
     writeFileSync('../published/api/tree.json', stringify(tree))
     console.log('Written: tree.json')
 
+    writeFileSync(
+      '../published/api/sitemap.txt',
+      Object.keys(tree.nodes)
+        .map((id) => {
+          return `https://notes.dt.in.th/${id}`
+        })
+        .join('\n')
+    )
+    console.log('Written: sitemap.txt')
+
     const sitegraph = await this.cache.getSitegraph()
     writeFileSync('../published/api/sitegraph.json', stringify(sitegraph))
     console.log('Written: sitegraph.json')
