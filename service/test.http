@@ -5,3 +5,23 @@ Authorization: Bearer {{$dotenv NOTES_API_KEY}}
 
 GET http://127.0.0.1:21024/private/sitegraph
 Authorization: Bearer {{$dotenv NOTES_API_KEY}}
+
+###
+
+GET http://127.0.0.1:21024/private/list
+Authorization: Bearer {{$dotenv NOTES_API_KEY}}
+
+###
+
+GET http://127.0.0.1:21024/private/public
+Authorization: Bearer {{$dotenv NOTES_API_KEY}}
+
+###
+
+GET http://127.0.0.1:21024/private/publicIndex
+Authorization: Bearer {{$dotenv NOTES_API_KEY}}
+
+###
+
+GET http://127.0.0.1:21024/private/searchKeys
+Authorization: Bearer {{$dotenv NOTES_API_KEY}}

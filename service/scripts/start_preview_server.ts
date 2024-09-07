@@ -1,6 +1,17 @@
 import { staticPlugin } from '@elysiajs/static'
+import { createCache } from 'async-cache-dedupe'
 import { Elysia, redirect } from 'elysia'
+import { appClient, headers } from '../src/appClient'
 import { generateHtml } from '../src/generateHtml'
+
+const treeCache = createCache({ ttl: 60, stale: 50 }).define(
+  'getTree',
+  async () => {
+    const { data, error } = await appClient.private.tree.get({ headers })
+    if (error) throw error
+    return data
+  }
+)
 
 const app = new Elysia()
   .use(
@@ -26,7 +37,8 @@ const app = new Elysia()
   })
   .get('/:slug', async ({ params: { slug } }) => {
     const source = await Bun.file('../data/' + slug + '.md').text()
-    const html = await generateHtml(source, slug)
+    const tree = await treeCache.getTree()
+    const html = await generateHtml(source, slug, tree)
     return new Response(html, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',

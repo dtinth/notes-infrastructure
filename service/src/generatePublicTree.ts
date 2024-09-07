@@ -2,7 +2,6 @@ import { NotesDatabase } from './NotesDatabase'
 
 export interface PublicTreeNode {
   title?: string
-  description?: string
   parent?: string
 }
 
@@ -30,12 +29,11 @@ export function generatePublicTree(db: NotesDatabase) {
     const thisParent = costMap.get(slug)!.via
     output[slug] = {
       title: note.title,
-      description: note.excerpt,
       parent: thisParent,
     }
 
     const links = note.links.split(' ')
-    const childCost = thisCost + links.length * (note.topic ? 0.5 : 1)
+    const childCost = thisCost + links.length * (note.topic ? 0.1 : 1)
     for (const link of links) {
       if (link) {
         queue.push(link)

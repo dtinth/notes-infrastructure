@@ -33,12 +33,12 @@ export async function generateSitegraph(
     }
     const sitegraphNode: SitegraphNode = {
       title: node.title,
-      links: node.links
-        .split(' ')
-        .filter(Boolean)
-        .map((target) => {
+      links: Array.from(
+        new Set(node.links.split(' ').filter(Boolean)),
+        (target) => {
           return { link: target }
-        }),
+        }
+      ),
     }
     nodes[id] = sitegraphNode
   }

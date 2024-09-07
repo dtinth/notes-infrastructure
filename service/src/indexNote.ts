@@ -1,3 +1,4 @@
+import { createHash } from 'crypto'
 import parseFrontmatter from 'gray-matter'
 import { MarkdownContent } from './MarkdownContent'
 import { Note } from './Note'
@@ -21,6 +22,7 @@ export function indexNote(
     if (existingSource === source) return false
   }
 
+  const hash = createHash('sha256').update(source).digest('hex')
   let { data: frontMatter, content } = parseFrontmatter(source)
   if (!frontMatter.public && options.publicOnly) {
     return false
@@ -52,6 +54,7 @@ export function indexNote(
   }
   const document: Note = {
     id: slug,
+    version: hash,
     public: !!frontMatter.public,
     topic: frontMatter.topic,
     aka: Array.isArray(frontMatter.aka)

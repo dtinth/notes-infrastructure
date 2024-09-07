@@ -1,6 +1,7 @@
-export type Note = {
+export interface Note {
   id: string
   topic: boolean
+  version: string
   text: string
   links: string
   aka: string
