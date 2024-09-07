@@ -20,6 +20,7 @@
     "hast": "^1.0.0",
     "hast-util-to-text": "^4.0.2",
     "jose": "^5.8.0",
+    "listr2": "^8.2.4",
     "markdown-it": "^14.1.0",
     "memoize-one": "^6.0.0",
     "micromark": "^4.0.0",
@@ -39,6 +40,7 @@
     "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {
+    "@types/rss": "^0.0.32",
     "bun-types": "latest"
   },
   "module": "src/index.js",

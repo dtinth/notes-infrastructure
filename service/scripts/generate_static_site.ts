@@ -8,6 +8,7 @@ import { getCompiler } from '../src/generateHtml'
 import { PublicTree } from '../src/generatePublicTree'
 import { Sitegraph } from '../src/generateSitegraph'
 import { supabase } from '../src/supabase'
+import { Tasks } from '../src/Tasks'
 import { unwrap } from '../src/unwrap'
 
 async function downloadFromSupabasePublic(name: string) {
@@ -40,63 +41,81 @@ class StaticSiteGenerator {
       }
     )
 
-  async generate() {
-    await $`rsync -vr ./node_modules/notes-frontend/dist/assets/ ../published/assets/`
-    await $`rsync -vr ./node_modules/notes-frontend/dist/lib/ ../published/lib/`
-    await $`rsync -vr ./node_modules/notes-frontend/dist/runtime/ ../published/runtime/`
+  generate() {
+    const tasks = new Tasks()
 
-    const tree = await this.cache.getTree()
-    const notes = unwrap(
-      await supabase.from('notes_contents').select('id, compiled')
-    )
-    const compiler = await getCompiler()
-    const template = await Bun.file(
-      'node_modules/notes-frontend/dist/index.html'
-    ).text()
-    const push = async (note: Exclude<typeof notes, null>[number]) => {
-      if (!note.compiled) {
-        return
-      }
-      const slug = note.id
-      const compiled = JSON.parse(note.compiled)
-      const html = compiler.applyTemplate({
-        slug,
-        template,
-        compiled,
-        publicTree: tree,
-      })
-      writeFileSync(`../published/${slug}.html`, html)
-      console.log('Written:', slug)
-    }
-
-    await pMap(notes || [], push, { concurrency: 4 })
-    writeFileSync('../published/404.html', template)
-  }
-  async generateApi() {
-    const tree = await this.cache.getTree()
-    writeFileSync('../published/api/tree.json', stringify(tree))
-    console.log('Written: tree.json')
-
-    writeFileSync(
-      '../published/api/sitemap.txt',
-      Object.keys(tree.nodes)
-        .map((id) => {
-          return `https://notes.dt.in.th/${id}`
+    tasks.addTasks(
+      'static files',
+      new Tasks()
+        .add('assets', async () => {
+          await $`rsync -vr ./node_modules/notes-frontend/dist/assets/ ../published/assets/`.quiet()
         })
-        .join('\n')
+        .add('lib', async () => {
+          await $`rsync -vr ./node_modules/notes-frontend/dist/lib/ ../published/lib/`.quiet()
+        })
+        .add('runtime', async () => {
+          await $`rsync -vr ./node_modules/notes-frontend/dist/runtime/ ../published/runtime/`.quiet()
+        })
     )
-    console.log('Written: sitemap.txt')
 
-    const sitegraph = await this.cache.getSitegraph()
-    writeFileSync('../published/api/sitegraph.json', stringify(sitegraph))
-    console.log('Written: sitegraph.json')
-
-    const index = await this.cache.getIndex()
-    writeFileSync('../published/api/index.json', JSON.stringify(index))
-    console.log('Written: index.json')
-
-    writeFileSync('../published/api/recent.xml', await this.generateRssFeed())
-    console.log('Written: recent.xml')
+    tasks.add('pages', async () => {
+      const tree = await this.cache.getTree()
+      const notes = unwrap(
+        await supabase.from('notes_contents').select('id, compiled')
+      )
+      const compiler = await getCompiler()
+      const template = await Bun.file(
+        'node_modules/notes-frontend/dist/index.html'
+      ).text()
+      const push = async (note: Exclude<typeof notes, null>[number]) => {
+        if (!note.compiled) {
+          return
+        }
+        const slug = note.id
+        const compiled = JSON.parse(note.compiled)
+        const html = compiler.applyTemplate({
+          slug,
+          template,
+          compiled,
+          publicTree: tree,
+        })
+        writeFileSync(`../published/${slug}.html`, html)
+        // console.log('Written:', slug)
+      }
+      await pMap(notes || [], push, { concurrency: 4 })
+      writeFileSync('../published/404.html', template)
+    })
+    return tasks
+  }
+  generateApi() {
+    const tasks = new Tasks()
+    tasks.add('tree.json', async () => {
+      const tree = await this.cache.getTree()
+      writeFileSync('../published/api/tree.json', stringify(tree))
+    })
+    tasks.add('sitemap.txt', async () => {
+      const tree = await this.cache.getTree()
+      writeFileSync(
+        '../published/api/sitemap.txt',
+        Object.keys(tree.nodes)
+          .map((id) => {
+            return `https://notes.dt.in.th/${id}`
+          })
+          .join('\n')
+      )
+    })
+    tasks.add('sitegraph.json', async () => {
+      const sitegraph = await this.cache.getSitegraph()
+      writeFileSync('../published/api/sitegraph.json', stringify(sitegraph))
+    })
+    tasks.add('index.json', async () => {
+      const index = await this.cache.getIndex()
+      writeFileSync('../published/api/index.json', JSON.stringify(index))
+    })
+    tasks.add('recent.xml', async () => {
+      writeFileSync('../published/api/recent.xml', await this.generateRssFeed())
+    })
+    return tasks
   }
 
   private async generateRssFeed() {
@@ -127,5 +146,9 @@ class StaticSiteGenerator {
 }
 
 const generator = new StaticSiteGenerator()
-// await generator.generate()
-await generator.generateApi()
+{
+  const tasks = new Tasks()
+  tasks.addTasks('site contents', generator.generate())
+  tasks.addTasks('data files', generator.generateApi())
+  await tasks.run()
+}
