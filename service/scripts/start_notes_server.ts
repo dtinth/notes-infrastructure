@@ -2,11 +2,14 @@ import { cors } from '@elysiajs/cors'
 import chokidar from 'chokidar'
 import { Elysia, t } from 'elysia'
 import MiniSearch from 'minisearch'
+import { ofetch } from 'ofetch'
 import { searchEngineOptions } from '../src/NotesDatabase'
 import { NotesManager } from '../src/NotesManager'
 import { NotesFileSystemSource } from '../src/NotesSource'
+import { mintAccessToken, verifyAccessToken } from '../src/accessToken'
 import { generatePublicTree } from '../src/generatePublicTree'
 import { generateSitegraph } from '../src/generateSitegraph'
+import { supabaseAnonKey, supabaseUrl } from '../src/supabase'
 
 // Start a notes manager
 const manager = new NotesManager(new NotesFileSystemSource())
@@ -25,7 +28,57 @@ chokidar
 
 const app = new Elysia()
   .use(cors())
-  .get('/v2/hello', () => 'meow')
+  .post(
+    '/auth/supabase',
+    async ({ body, set }) => {
+      const { supabaseAccessToken } = body
+      const result = await ofetch<{ id: string }>(
+        `${supabaseUrl}/auth/v1/user`,
+        {
+          headers: {
+            authorization: `Bearer ${supabaseAccessToken}`,
+            apikey: supabaseAnonKey,
+          },
+        }
+      )
+      if (result.id !== process.env.SUPABASE_ADMIN_UID) {
+        set.status = 'Unauthorized'
+        return { error: 'Unauthorized' }
+      }
+      return { accessToken: await mintAccessToken() }
+    },
+    {
+      body: t.Object({
+        supabaseAccessToken: t.String(),
+      }),
+    }
+  )
+  .group(
+    '/web',
+    {
+      headers: t.Object({
+        authorization: t.String({ pattern: '^Bearer .+$' }),
+      }),
+      async beforeHandle({ headers, set }) {
+        const token = headers.authorization.split(' ')[1]
+        try {
+          await verifyAccessToken(token)
+        } catch (e) {
+          set.status = 'Unauthorized'
+          return { error: 'Unauthorized' }
+        }
+      },
+    },
+    (app) =>
+      app
+        .get('/ok', async () => 'ok')
+        .get('/notes/:id', async ({ params }) => {
+          const { id } = params
+          const note = manager.db.documentMap.get(id)
+          const source = manager.db.contentsMap.get(id)
+          return { note, source }
+        })
+  )
   .group(
     '/private',
     {

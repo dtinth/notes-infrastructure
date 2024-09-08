@@ -17,6 +17,9 @@ export class Tasks {
         f({
           log: (text) => (task.output = text),
         }),
+      rendererOptions: {
+        persistentOutput: true,
+      },
     })
     return this
   }
@@ -31,6 +34,9 @@ export class Tasks {
     return this.toListr().run()
   }
   private toListr() {
-    return new Listr(this.tasks, { concurrent: this.concurrent })
+    return new Listr(this.tasks, {
+      concurrent: this.concurrent,
+      rendererOptions: { collapseSubtasks: false },
+    })
   }
 }

@@ -58,15 +58,23 @@ class StaticSiteGenerator {
         })
     )
 
-    tasks.add('pages', async () => {
+    tasks.add('pages', async ({ log }) => {
+      log('loading tree…')
       const tree = await this.cache.getTree()
+
+      log('loading notes…')
       const notes = unwrap(
         await supabase.from('notes_contents').select('id, compiled')
       )
+
+      log('loading compiler…')
       const compiler = await getCompiler()
+
+      log('loading template…')
       const template = await Bun.file(
         'node_modules/notes-frontend/dist/index.html'
       ).text()
+
       const push = async (note: Exclude<typeof notes, null>[number]) => {
         if (!note.compiled) {
           return
@@ -80,10 +88,12 @@ class StaticSiteGenerator {
           publicTree: tree,
         })
         writeFileSync(`../published/${slug}.html`, html)
-        // console.log('Written:', slug)
+        log(`generated ${slug}.html`)
       }
+      log('generating files…')
       await pMap(notes || [], push, { concurrency: 4 })
       writeFileSync('../published/404.html', template)
+      log('done')
     })
     return tasks
   }
