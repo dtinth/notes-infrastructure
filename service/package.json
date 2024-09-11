@@ -28,7 +28,7 @@
     "micromark-extension-gfm-strikethrough": "^2.1.0",
     "micromark-extension-gfm-table": "^2.1.0",
     "minisearch": "^7.1.0",
-    "notes-frontend": "./notes-frontend-0.0.240903165147.tgz",
+    "notes-frontend": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.240911154147/notes-frontend-0.0.240911154147.tgz",
     "ofetch": "^1.3.4",
     "p-limit": "^6.1.0",
     "p-map": "^7.0.2",
@@ -40,8 +40,10 @@
     "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {
+    "@prettier/plugin-xml": "^3.4.1",
     "@types/rss": "^0.0.32",
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "prettier": "^3.3.3"
   },
   "module": "src/index.js",
   "type": "module"

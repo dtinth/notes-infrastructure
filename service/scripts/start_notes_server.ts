@@ -74,6 +74,7 @@ const app = new Elysia()
         .get('/ok', async () => 'ok')
         .get('/notes/:id', async ({ params }) => {
           const { id } = params
+          await manager.index(id)
           const note = manager.db.documentMap.get(id)
           const source = manager.db.contentsMap.get(id)
           return { note, source }

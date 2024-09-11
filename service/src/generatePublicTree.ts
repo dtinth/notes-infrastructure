@@ -33,7 +33,7 @@ export function generatePublicTree(db: NotesDatabase) {
     }
 
     const links = note.links.split(' ')
-    const childCost = thisCost + links.length * (note.topic ? 0.1 : 1)
+    const childCost = thisCost + links.length * (note.topic ? 0.001 : 1)
     for (const link of links) {
       if (link) {
         queue.push(link)

@@ -18,7 +18,7 @@ export class NotesManager {
       await this.mutex(() => this.doUpdateIndex())
       return timestamps
     },
-    { batchScheduleFn: (callback) => setTimeout(callback, 100) }
+    { batchScheduleFn: (callback) => setTimeout(callback, 100) },
   )
 
   private async doUpdateIndex() {
@@ -45,11 +45,18 @@ export class NotesManager {
       removed++
     }
     this.log(
-      `Indexing done. Added: ${added}, Changed: ${changed}, Removed: ${removed}`
+      `Indexing done. Added: ${added}, Changed: ${changed}, Removed: ${removed}`,
     )
   }
 
   async indexAll() {
     return this.indexUpdater.load(Date.now())
+  }
+
+  async index(id: string) {
+    await this.mutex(async () => {
+      const content = await this.source.read(id)
+      indexNote(this.db, id, content)
+    })
   }
 }
