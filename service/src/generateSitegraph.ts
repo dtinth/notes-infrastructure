@@ -1,3 +1,4 @@
+import sortKeys from 'sort-keys'
 import { PublicTree } from './generatePublicTree'
 import { NotesDatabase } from './NotesDatabase'
 
@@ -21,7 +22,7 @@ export interface SitegraphLink {
 
 export async function generateSitegraph(
   db: NotesDatabase,
-  publicTree: PublicTree
+  publicTree: PublicTree,
 ): Promise<Sitegraph> {
   const publicIds = Object.keys(publicTree.nodes)
   const nodes: { [id: string]: SitegraphNode } = {}
@@ -37,11 +38,11 @@ export async function generateSitegraph(
         new Set(node.links.split(' ').filter(Boolean)),
         (target) => {
           return { link: target }
-        }
+        },
       ),
     }
     nodes[id] = sitegraphNode
   }
-  const sitegraph: Sitegraph = { nodes }
+  const sitegraph: Sitegraph = { nodes: sortKeys(nodes) }
   return sitegraph
 }

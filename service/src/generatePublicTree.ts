@@ -1,3 +1,4 @@
+import sortKeys from 'sort-keys'
 import { NotesDatabase } from './NotesDatabase'
 
 export interface PublicTreeNode {
@@ -45,5 +46,5 @@ export function generatePublicTree(db: NotesDatabase) {
     queue.sort((a, b) => costMap.get(a)!.cost - costMap.get(b)!.cost)
   }
 
-  return { nodes: output }
+  return { nodes: sortKeys(output) }
 }
