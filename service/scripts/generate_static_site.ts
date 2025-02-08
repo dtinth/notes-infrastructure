@@ -33,6 +33,11 @@ class StaticSiteGenerator {
     .define('getIndex', async (): Promise<object> => {
       return JSON.parse(await downloadFromSupabasePublic('notes.index.json'))
     })
+    .define('getNotesCompiled', async () => {
+      return unwrap(
+        await supabase.from('notes_contents').select('id, compiled'),
+      )
+    })
 
   compilerVersion = '4'
 
@@ -116,9 +121,7 @@ class StaticSiteGenerator {
       const tree = await this.cache.getTree()
 
       log('loading notes…')
-      const notes = unwrap(
-        await supabase.from('notes_contents').select('id, compiled'),
-      )
+      const notes = await this.cache.getNotesCompiled()
 
       log('loading compiler…')
       const compiler = await getCompiler()
@@ -149,7 +152,9 @@ class StaticSiteGenerator {
         log(`generated ${slug}.html`)
       }
       log('generating files…')
-      const notesToPublish = (notes || []).filter((note) => publicIds.has(note.id))
+      const notesToPublish = (notes || []).filter((note) =>
+        publicIds.has(note.id),
+      )
       await pMap(notesToPublish, push, { concurrency: 4 })
       writeFileSync('../published/404.html', template)
       log('done')
@@ -208,19 +213,35 @@ class StaticSiteGenerator {
       feed_url: 'https://notes.dt.in.th/api/recent.xml',
       site_url: 'https://dt.in.th',
     })
+    const notes = (await this.cache.getNotesCompiled()) || []
+    const noteMap = new Map(notes.map((note) => [note.id, note]))
+    let count = 0
     for (const m of source.matchAll(
       /^- (\d\d\d\d-\d\d-\d\d): \[(.*?)\]\(([^)\s]+)\)/gm,
     )) {
       const url = new URL(m[3], 'https://notes.dt.in.th/').toString()
+      const compilation = noteMap.get(m[3])?.compiled
+      const html = compilation ? JSON.parse(compilation).html : ''
       const options = {
         title: m[2],
-        description: `<a href="${url}">[Read]</a>`,
+        description: `<a href="${url}">[Read on notes.dt.in.th]</a>${html}`,
         url: url,
         date: new Date(m[1] + 'T00:00:00Z'),
       }
       feed.item(options)
+      if (++count >= 20) {
+        break
+      }
     }
-    const xmlContent = feed.xml()
+    const xmlContent = feed.xml().replace(
+      '</channel>',
+      `
+        <follow_challenge>
+          <feedId>81341335623521281</feedId>
+          <userId>56028730846183424</userId>
+        </follow_challenge>
+      </channel>`,
+    )
     const prettifiedXml = await prettier.format(xmlContent, {
       parser: 'xml',
       plugins: [xmlPlugin],
