@@ -132,6 +132,12 @@ The notes system supports several custom Markdown extensions:
 - **Syntax**: `:::lead` for emphasized introductory text
 - **Usage**: Frequently used across many files
 
+### Footnotes
+- **Syntax**: `[^footnote_name]` in text, then `[^footnote_name]: content` at bottom
+- **Usage**: For detailed explanations that would interrupt the main flow
+- **Rendering**: Footnote markers become clickable buttons that display content in popovers on the web
+- **Guidelines**: Footnotes can be long and detailed - they keep the main text direct while providing technical details
+
 ## Guidelines for Content Creation
 
 When helping create or edit notes:
@@ -144,6 +150,7 @@ When helping create or edit notes:
 6. **Use minimal front matter** - only `title` and `public: true` unless other fields are needed
 7. **Maintain reachability** - ensure new notes are linked from HomePage or topic pages
 8. **Use special syntax appropriately** - leverage callouts for important information, two-column layout for side-by-side content, and other custom elements when they enhance readability
+9. **Link structure** - Regular notes should inline link keywords to topics (e.g., `[GitHub Actions](GitHubActions)`). "Related" sections are only for topic pages, not regular notes
 
 ## Navigation Philosophy
 
