@@ -10,27 +10,27 @@ const treeCache = createCache({ ttl: 60, stale: 50 }).define(
     const { data, error } = await appClient.private.tree.get({ headers })
     if (error) throw error
     return data
-  }
+  },
 )
 
 const app = new Elysia()
   .use(
     staticPlugin({
-      assets: 'node_modules/notes-frontend/dist/assets',
-      prefix: '/assets',
-    })
+      assets: 'node_modules/@notes/compiler/dist/compiler',
+      prefix: '/compiler',
+    }),
   )
   .use(
     staticPlugin({
-      assets: 'node_modules/notes-frontend/dist/lib',
-      prefix: '/lib',
-    })
+      assets: 'node_modules/@notes/client/dist/static',
+      prefix: '/static',
+    }),
   )
   .use(
     staticPlugin({
-      assets: 'node_modules/notes-frontend/dist/runtime',
+      assets: 'node_modules/@notes/client/dist/runtime',
       prefix: '/runtime',
-    })
+    }),
   )
   .get('/', () => {
     return redirect('/HomePage')
@@ -48,5 +48,5 @@ const app = new Elysia()
   .listen({ port: 22024, hostname: '127.0.0.1' })
 
 console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
+  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
 )
