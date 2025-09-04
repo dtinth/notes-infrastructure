@@ -8,9 +8,9 @@
         "@elysiajs/eden": "^1.1.2",
         "@elysiajs/static": "^1.1.0",
         "@emotion/weak-memoize": "^0.4.0",
-        "@notes/client": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904182313/notes-client-0.0.250904182313.tgz",
-        "@notes/compiler": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904182313/notes-compiler-0.0.250904182313.tgz",
-        "@notes/html-generator": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904182313/notes-html-generator-0.0.250904182313.tgz",
+        "@notes/client": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904193332/notes-client-0.0.250904193332.tgz",
+        "@notes/compiler": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904193332/notes-compiler-0.0.250904193332.tgz",
+        "@notes/html-generator": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904193332/notes-html-generator-0.0.250904193332.tgz",
         "@supabase/supabase-js": "",
         "@thai/funny-json": "npm:@jsr/thai__funny-json@0.0.2",
         "@thai/get-or-create": "npm:@jsr/thai__get-or-create",
@@ -57,11 +57,11 @@
 
     "@emotion/weak-memoize": ["@emotion/weak-memoize@0.4.0", "", {}, "sha512-snKqtPW01tN0ui7yu9rGv69aJXr/a/Ywvl11sUjNtEcRc+ng/mQriFL0wLXMef74iHa/EkftbDzU9F8iFbH+zg=="],
 
-    "@notes/client": ["@notes/client@https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904182313/notes-client-0.0.250904182313.tgz", {}],
+    "@notes/client": ["@notes/client@https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904193332/notes-client-0.0.250904193332.tgz", {}],
 
-    "@notes/compiler": ["@notes/compiler@https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904182313/notes-compiler-0.0.250904182313.tgz", { "dependencies": { "rehype-remove-comments": "^6.1.1" } }],
+    "@notes/compiler": ["@notes/compiler@https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904193332/notes-compiler-0.0.250904193332.tgz", { "dependencies": { "rehype-remove-comments": "^6.1.1" } }],
 
-    "@notes/html-generator": ["@notes/html-generator@https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904182313/notes-html-generator-0.0.250904182313.tgz", { "dependencies": { "lodash-es": "^4.17.21" } }],
+    "@notes/html-generator": ["@notes/html-generator@https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904193332/notes-html-generator-0.0.250904193332.tgz", { "dependencies": { "lodash-es": "^4.17.21" } }],
 
     "@prettier/plugin-xml": ["@prettier/plugin-xml@3.4.1", "", { "dependencies": { "@xml-tools/parser": "^1.0.11" }, "peerDependencies": { "prettier": "^3.0.0" } }, "sha512-Uf/6/+9ez6z/IvZErgobZ2G9n1ybxF5BhCd7eMcKqfoWuOzzNUxBipNo3QAP8kRC1VD18TIo84no7LhqtyDcTg=="],
 
