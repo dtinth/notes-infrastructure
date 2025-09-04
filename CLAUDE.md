@@ -97,6 +97,7 @@ aliases: # For alternative names/IDs
 **Purpose**: Hub pages that collect related notes and external resources on a specific subject
 **Front matter**: `topic: true`
 **Structure**:
+
 1. **Short paragraph intro** - brief definition or description of the topic
 2. **List of notes** - chronological order (older first), personal notes related to the topic
 3. **Bookmarks section** - external resources with 🔖 emoji
@@ -108,7 +109,7 @@ aliases: # For alternative names/IDs
 
 **Purpose**: Pages that benefit from wider layout and two-column structure
 **Front matter**: `wide: true`
-**Structure**: Uses `::::split` with `:::aside` for right column content
+**Structure**: Uses `:::::split` with `::::aside` for right column content
 
 **Examples**: [AboutNotes](AboutNotes), [ManagingKnowledgePublicly](ManagingKnowledgePublicly)
 
@@ -130,6 +131,18 @@ aliases: # For alternative names/IDs
 5. Add to `Recent.md` for RSS generation
 6. Run `yarn sync` to publish
 
+### Renaming Notes
+
+When renaming a note from `OldName` to `NewName`:
+
+1. **Move the file** using `mv data/OldName.md data/NewName.md`
+2. **Add alias** to the renamed file's front matter: add `OldName` to the `aliases` array
+3. **Find all references** using `Grep` with pattern `OldName` in the `data/` folder
+4. **Update all links** that reference `OldName` to use `NewName` instead
+5. User will run `yarn sync` themselves to republish
+
+This ensures backward compatibility through aliases while updating all internal references to use the new name.
+
 ### Recent Notes Management
 
 - Manually add new public notes to `Recent.md`
@@ -149,8 +162,7 @@ The notes system supports several custom Markdown extensions:
 
 ### Two-Column Layout
 
-- **HTML syntax**: `<d-split>` elements with `<div slot="right">` for right column content
-- **Directive syntax**: `::::split` with `:::aside` for right column content
+- **Directive syntax**: `:::::split` with `::::aside` for right column content
 - **Usage**: Moderately used (41 occurrences across 7 files)
 
 ### Grid System
@@ -189,17 +201,16 @@ The notes system supports several custom Markdown extensions:
 
 ### Figures and Images
 
-- **Syntax**: `<figure>` with `<figcaption>` for proper semantic markup
-- **Classes**: 
+- **Syntax**: `:::figure[Caption text]{.class}` directive for proper semantic markup
+- **Classes**:
   - `framed` - adds border/frame around images
 - **Usage**: For images, screenshots, and visual content that needs captions
 - **Examples**: [AboutNotes](AboutNotes), [ManagingKnowledgePublicly](ManagingKnowledgePublicly)
 
-```html
-<figure class="framed">
+```markdown
+:::figure[Image caption with links]{.framed}
 ![Alt text](image-url)
-<figcaption>Image caption with <a href="link">links</a></figcaption>
-</figure>
+:::
 ```
 
 ## Guidelines for Content Creation
