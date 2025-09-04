@@ -215,6 +215,21 @@ The notes system supports several custom Markdown extensions:
 :::
 ```
 
+### Twitter Embeds
+
+- **Syntax**: `:::tweet` directive for embedding Twitter content
+- **Usage**: For embedding Twitter posts and threads
+- **Content**: Raw Twitter blockquote HTML inside the directive
+- **Examples**: [Gyroscratch](Gyroscratch)
+
+```markdown
+:::tweet
+
+<p lang="en" dir="ltr">Tweet content here...</p>&mdash; Username (@handle) <a href="https://twitter.com/handle/status/123">Date</a>
+
+:::
+```
+
 ## Guidelines for Content Creation
 
 When helping create or edit notes:
