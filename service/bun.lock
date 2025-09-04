@@ -8,9 +8,9 @@
         "@elysiajs/eden": "^1.1.2",
         "@elysiajs/static": "^1.1.0",
         "@emotion/weak-memoize": "^0.4.0",
-        "@notes/client": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904065552-nx/notes-client-0.0.250904065552-nx.tgz",
-        "@notes/compiler": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904065552-nx/notes-compiler-0.0.250904065552-nx.tgz",
-        "@notes/html-generator": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904065552-nx/notes-html-generator-0.0.250904065552-nx.tgz",
+        "@notes/client": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904182313/notes-client-0.0.250904182313.tgz",
+        "@notes/compiler": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904182313/notes-compiler-0.0.250904182313.tgz",
+        "@notes/html-generator": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904182313/notes-html-generator-0.0.250904182313.tgz",
         "@supabase/supabase-js": "",
         "@thai/funny-json": "npm:@jsr/thai__funny-json@0.0.2",
         "@thai/get-or-create": "npm:@jsr/thai__get-or-create",
@@ -29,7 +29,6 @@
         "micromark-extension-gfm-strikethrough": "^2.1.0",
         "micromark-extension-gfm-table": "^2.1.0",
         "minisearch": "^7.1.0",
-        "notes-frontend": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.240928173659/notes-frontend-0.0.240928173659.tgz",
         "ofetch": "^1.3.4",
         "p-limit": "^6.1.0",
         "p-map": "^7.0.2",
@@ -58,11 +57,11 @@
 
     "@emotion/weak-memoize": ["@emotion/weak-memoize@0.4.0", "", {}, "sha512-snKqtPW01tN0ui7yu9rGv69aJXr/a/Ywvl11sUjNtEcRc+ng/mQriFL0wLXMef74iHa/EkftbDzU9F8iFbH+zg=="],
 
-    "@notes/client": ["@notes/client@https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904065552-nx/notes-client-0.0.250904065552-nx.tgz", {}],
+    "@notes/client": ["@notes/client@https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904182313/notes-client-0.0.250904182313.tgz", {}],
 
-    "@notes/compiler": ["@notes/compiler@https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904065552-nx/notes-compiler-0.0.250904065552-nx.tgz", {}],
+    "@notes/compiler": ["@notes/compiler@https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904182313/notes-compiler-0.0.250904182313.tgz", { "dependencies": { "rehype-remove-comments": "^6.1.1" } }],
 
-    "@notes/html-generator": ["@notes/html-generator@https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904065552-nx/notes-html-generator-0.0.250904065552-nx.tgz", { "dependencies": { "lodash-es": "^4.17.21" } }],
+    "@notes/html-generator": ["@notes/html-generator@https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904182313/notes-html-generator-0.0.250904182313.tgz", { "dependencies": { "lodash-es": "^4.17.21" } }],
 
     "@prettier/plugin-xml": ["@prettier/plugin-xml@3.4.1", "", { "dependencies": { "@xml-tools/parser": "^1.0.11" }, "peerDependencies": { "prettier": "^3.0.0" } }, "sha512-Uf/6/+9ez6z/IvZErgobZ2G9n1ybxF5BhCd7eMcKqfoWuOzzNUxBipNo3QAP8kRC1VD18TIo84no7LhqtyDcTg=="],
 
@@ -116,8 +115,6 @@
 
     "async-cache-dedupe": ["async-cache-dedupe@2.2.0", "", { "dependencies": { "mnemonist": "^0.39.5", "safe-stable-stringify": "^2.4.3" } }, "sha512-jl4L6dGC+KLB/LIA1iIBiq7eWQ43K7lIcIdwbUUwRmfT209yH8Xm1uPTOxxlNQ7XD6/XHU7xhSr/NgPxlH04MQ=="],
 
-    "async-memoize-one": ["async-memoize-one@1.1.8", "", { "dependencies": { "fast-deep-equal": "~3.1.3" } }, "sha512-pS8gDRFMFDGEVaWUFy9i9OIJQ5o9L8XNQMnv7Ku76XONO5pxK+1cN9IackyPUv717Vg1J8KI2AaLJG28ZHKIkw=="],
-
     "bail": ["bail@2.0.2", "", {}, "sha512-0xO6mYd7JB2YesxDKplafRpsiOzPt9V02ddPCLbY1xYGPOX24NTyN50qnUxgCPcSoYMhKpAuBTjQoRZCAkUDRw=="],
 
     "binary-extensions": ["binary-extensions@2.3.0", "", {}, "sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw=="],
@@ -170,8 +167,6 @@
 
     "fast-decode-uri-component": ["fast-decode-uri-component@1.0.1", "", {}, "sha512-WKgKWg5eUxvRZGwW8FvfbaH7AXSh2cL+3j5fMGzUMCxWBJ3dV3a7Wz8y2f/uQ0e3B6WmodD3oS54jTQ9HVTIIg=="],
 
-    "fast-deep-equal": ["fast-deep-equal@3.1.3", "", {}, "sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q=="],
-
     "fill-range": ["fill-range@7.1.1", "", { "dependencies": { "to-regex-range": "^5.0.1" } }, "sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg=="],
 
     "fsevents": ["fsevents@2.3.3", "", { "os": "darwin" }, "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw=="],
@@ -185,6 +180,8 @@
     "hast-util-from-html": ["hast-util-from-html@2.0.2", "", { "dependencies": { "@types/hast": "^3.0.0", "devlop": "^1.1.0", "hast-util-from-parse5": "^8.0.0", "parse5": "^7.0.0", "vfile": "^6.0.0", "vfile-message": "^4.0.0" } }, "sha512-HwOHwxdt2zC5KQ/CNoybBntRook2zJvfZE/u5/Ap7aLPe22bDqen7KwGkOqOyzL5zIqKwiYX/OTtE0FWgr6XXA=="],
 
     "hast-util-from-parse5": ["hast-util-from-parse5@8.0.1", "", { "dependencies": { "@types/hast": "^3.0.0", "@types/unist": "^3.0.0", "devlop": "^1.0.0", "hastscript": "^8.0.0", "property-information": "^6.0.0", "vfile": "^6.0.0", "vfile-location": "^5.0.0", "web-namespaces": "^2.0.0" } }, "sha512-Er/Iixbc7IEa7r/XLtuG52zoqn/b3Xng/w6aZQ0xGVxzhw5xUFxcRqdPzP6yFi/4HBYRaifaI5fQ1RH8n0ZeOQ=="],
+
+    "hast-util-is-conditional-comment": ["hast-util-is-conditional-comment@3.0.1", "", { "dependencies": { "@types/hast": "^3.0.0" } }, "sha512-RWpXL//CiEWwOh4OeAvr2fFeoBbX/sAnPnaYN9x4Nv6O4VPdFf/3Dq64mIybctblVA498SgVjfNc0/mN9S4IQw=="],
 
     "hast-util-is-element": ["hast-util-is-element@3.0.0", "", { "dependencies": { "@types/hast": "^3.0.0" } }, "sha512-Val9mnv2IWpLbNPqc/pUem+a7Ipj2aHacCwgNfTiK0vJKl0LF+4Ba4+v1oPHFpf3bLYmreq0/l3Gud9S5OH42g=="],
 
@@ -286,8 +283,6 @@
 
     "normalize-path": ["normalize-path@3.0.0", "", {}, "sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA=="],
 
-    "notes-frontend": ["notes-frontend@https://github.com/dtinth/notes-frontend/releases/download/v0.0.240928173659/notes-frontend-0.0.240928173659.tgz", { "dependencies": { "@supabase/supabase-js": "^2.45.3", "async-memoize-one": "^1.1.8", "minisearch": "^7.1.0", "stemmer": "^2.0.1", "stopwords": "^0.0.9" } }],
-
     "obliterator": ["obliterator@2.0.4", "", {}, "sha512-lgHwxlxV1qIg1Eap7LgIeoBWIMFibOjbrYPIPJZcI1mmGAI2m3lNYpK12Y+GBdPQ0U1hRwSord7GIaawz962qQ=="],
 
     "ofetch": ["ofetch@1.3.4", "", { "dependencies": { "destr": "^2.0.3", "node-fetch-native": "^1.6.3", "ufo": "^1.5.3" } }, "sha512-KLIET85ik3vhEfS+3fDlc/BAZiAp+43QEC/yCo5zkNoY2YaKvNkOaFr/6wCFgFH1kuYQM5pMNi0Tg8koiIemtw=="],
@@ -315,6 +310,8 @@
     "regexp-to-ast": ["regexp-to-ast@0.5.0", "", {}, "sha512-tlbJqcMHnPKI9zSrystikWKwHkBqu2a/Sgw01h3zFjvYrMxEDYHzzoMZnUrbIfpTFEsoRnnviOXNCzFiSc54Qw=="],
 
     "rehype-parse": ["rehype-parse@9.0.0", "", { "dependencies": { "@types/hast": "^3.0.0", "hast-util-from-html": "^2.0.0", "unified": "^11.0.0" } }, "sha512-WG7nfvmWWkCR++KEkZevZb/uw41E8TsH4DsY9UxsTbIXCVGbAs4S+r8FrQ+OtH5EEQAs+5UxKC42VinkmpA1Yw=="],
+
+    "rehype-remove-comments": ["rehype-remove-comments@6.1.1", "", { "dependencies": { "@types/hast": "^3.0.0", "hast-util-is-conditional-comment": "^3.0.0", "unist-util-visit": "^5.0.0" } }, "sha512-O3OAvqpV8IUJf6+Q4s5nqaKQqrgeXdU/+0fjUHMO0KAB4SwkMdN34NJQC9hexwvjYE00tX/xB8GvnVJI8Cdf6g=="],
 
     "restore-cursor": ["restore-cursor@5.1.0", "", { "dependencies": { "onetime": "^7.0.0", "signal-exit": "^4.1.0" } }, "sha512-oMA2dcrw6u0YfxJQXm342bFKX/E4sG9rbTzO9ptUcR/e8A33cHuvStiYOwH7fszkZlZ1z/ta9AAoPk2F4qIOHA=="],
 

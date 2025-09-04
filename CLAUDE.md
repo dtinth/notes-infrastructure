@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file proyeah because vides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Repository Overview
 
@@ -80,6 +80,7 @@ public: true
 ---
 title: 'Page Title'
 public: true
+created: 2020-10-03 # Creation date (YYYY-MM-DD format, especially useful for renamed files)
 topic: true # For topic pages only
 wide: true # For wider page layout
 meta: true # For meta pages
@@ -173,6 +174,7 @@ The notes system supports several custom Markdown extensions:
 ### Callouts (Info Boxes)
 
 - **Syntax**: `:::info`, `:::warning`, `:::tip`, `:::success`, `:::important`, `:::danger`, `:::caution`
+- **Custom titles**: All callout types support custom titles with bracket syntax: `:::info[Custom Title]`
 - **Usage**: Commonly used (36+ occurrences across 13+ files)
 - **Details**: `:::details[Title]` for collapsible content
 
@@ -285,3 +287,122 @@ When creating new topic pages (`topic: true`):
 - **Topic pages go to HomePage**: Add to alphabetical topics list, not Recent.md
 - **Linked content must be public**: Check and publish any private notes referenced by the topic
 - **Cross-reference updates**: Update Database, Tools, or other relevant topic pages
+
+## Old Blog Migration Workflow
+
+When migrating content from Thai's old blog (dt.in.th) to the notes system:
+
+### Fetching Content
+
+**ALWAYS use curl** - WebFetch gives summaries, not exact raw content:
+
+```bash
+curl -s "https://raw.githubusercontent.com/dtinth/dt.in.th/refs/heads/master/{slug}.md"
+```
+
+### Conversion Rules
+
+1. **File naming**: Convert `hyphenated-slug` → `CamelCase`
+2. **Add alias**: Include old slug in `aliases` array for domain migration
+3. **Component conversion**:
+   - `<YouTube id="X" />` → `::youtube[X]`
+   - `<SoundCloud id="X" />` → `::soundcloud[X]`
+   - `<call-to-action href="...">Text</call-to-action>` → `::cta[Text]{href="..."}`
+   - Remove `<template>` wrappers
+
+### Front Matter Processing
+
+**Remove these fields**:
+
+- `parents` (ignore completely)
+- `image` and `description` (unless specifically requested to keep)
+- `updated` (if same as `created`)
+- `soundcloud` (unless specifically requested to keep)
+
+**Convert these fields**:
+
+- `created: 2016-09-23T00:00:00.000Z` → `created: 2016-09-23` (remove time component)
+
+**Add these fields**:
+
+- `public: true`
+- `aliases: [old-slug]`
+
+**Keep these fields unchanged**:
+
+- `song` metadata structure (artist, type, genre)
+- `title`
+
+### Link Conversion
+
+- `./filename.md` → `https://dt.in.th/filename.html` (for unmigrated content)
+- `./filename.md` → `NoteName` (if already migrated to notes system)
+- Always check if referenced content exists in notes system first
+
+### Content Rules
+
+1. **Always add H1 heading** matching the title
+2. **Preserve ALL content** - including complete submission texts, lyrics, etc.
+3. **Topic linking**: Link only the FIRST occurrence of topic words (e.g., first "song" → `[song](Songs)`) to avoid link spam
+4. **Cross-references**: Update referring pages to link to new note name
+
+### Songs-Specific Workflow
+
+For song migrations:
+
+1. **Add to Songs table** in chronological order (newest first)
+2. **Table format**: `| YYYY-MM-DD | [**Title**](NoteName) | GENRE | Description |`
+3. **Genre**: Use uppercase genre from front matter
+4. **Description**: Brief summary, don't link "song" in table (avoid self-reference)
+5. **Capitalization matters**: Use correct acronym capitalization (e.g., `BMS` not `Bms`)
+
+### Cross-Reference Updates
+
+After migration, update all references to the old content:
+
+1. **Search for old slug**: `grep -r "old-slug" data/`
+2. **Search for old domain links**: `grep -r "old-slug\.html" data/`
+3. **Update all references** to use the new `NoteName` format
+4. **Verify no broken links** remain in the system
+
+### Common Pitfalls to Avoid
+
+- **Don't use WebFetch** - use curl for exact content
+- **Don't skip submission texts** - these are valuable historical context
+- **Don't spam topic links** - only link first occurrence
+- **Don't forget cross-references** - update other pages that reference the content
+- **Don't assume component syntax** - verify directive formats (::youtube, ::soundcloud, ::cta)
+- **Always grep for old references** - other pages may link to the old blog URLs
+
+## Critical Editing Limitations
+
+### Curly Quotes Issue
+
+**IMPORTANT**: Due to Claude Code limitation (https://github.com/anthropics/claude-code/issues/1599), Claude cannot output curly quotes ("smart quotes"). When editing existing text that contains curly quotes, they will be automatically converted to straight quotes.
+
+**Mitigation strategies**:
+- Use **surgical replacements** that target only specific URLs/links, not entire sentences
+- When possible, replace only the minimal necessary text (e.g., just the URL part)
+- Avoid editing large blocks of text that contain curly quotes
+- Be especially careful with Thai's writing which uses smart quotes throughout
+
+**Example of surgical replacement**:
+```
+# Good - only replace the URL
+old_string: "https://dt.in.th/old-slug.html"
+new_string: "NewNoteName"
+
+# Bad - would convert curly quotes to straight quotes
+old_string: "I wrote about this in my [article](https://dt.in.th/old-slug.html) which..."
+```
+
+## Index Topics Reference
+
+The following are the main index/topic pages that collect related content:
+
+- **Songs** - Musical compositions and tracks
+- **Projects** - Software projects and applications  
+- **Talks** - Presentations, lectures, and conference talks
+- **Tools** - Development tools and utilities
+
+When migrating content, ensure appropriate items are added to these index pages in addition to any cross-references.
