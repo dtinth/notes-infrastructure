@@ -40,7 +40,7 @@ class StaticSiteGenerator {
       )
     })
 
-  compilerVersion = '4'
+  compilerVersion = '5'
 
   async findNotesToCompile() {
     const info = unwrap(
