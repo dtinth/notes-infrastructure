@@ -1,27 +1,22 @@
+import { generateHtml as generateNoteHtml } from '@notes/html-generator'
 import { PublicTree } from './generatePublicTree'
 
 export async function generateHtml(
   source: string,
   slug: string,
-  tree: PublicTree
+  _tree: PublicTree,
 ) {
-  const { result, compiler } = await compileNote(source, slug)
-  const template = await Bun.file(
-    'node_modules/notes-frontend/dist/index.html'
-  ).text()
+  const { result } = await compileNote(source, slug)
   const { compiled } = result
-  const html = compiler.applyTemplate({
-    slug,
-    template,
-    compiled,
-    publicTree: tree,
-  })
+  const html = generateNoteHtml({ slug, compiled })
   return html
 }
 
 export async function getCompiler() {
-  const compilerPath = 'notes-frontend/dist/lib/compiler/index.js'
-  const compiler = await import(compilerPath)
+  const compilerPath = '@notes/compiler/dist/compiler/index.js'
+  const compiler = (await import(
+    compilerPath
+  )) as typeof import('@notes/compiler/dist/compiler')
   return compiler
 }
 

@@ -1,3 +1,4 @@
+import { generateHtml } from '@notes/html-generator'
 import xmlPlugin from '@prettier/plugin-xml'
 import { stringify } from '@thai/funny-json'
 import { createCache } from 'async-cache-dedupe'
@@ -6,7 +7,7 @@ import { readFileSync, writeFileSync } from 'fs'
 import pMap from 'p-map'
 import prettier from 'prettier'
 import RSS from 'rss'
-import { compileNote, getCompiler } from '../src/generateHtml'
+import { compileNote } from '../src/generateHtml'
 import { PublicTree } from '../src/generatePublicTree'
 import { Sitegraph } from '../src/generateSitegraph'
 import { supabase } from '../src/supabase'
@@ -105,14 +106,14 @@ class StaticSiteGenerator {
     tasks.addTasks(
       'static files',
       new Tasks()
-        .add('assets', async () => {
-          await $`rsync -vr ./node_modules/notes-frontend/dist/assets/ ../published/assets/`.quiet()
+        .add('compiler', async () => {
+          await $`rsync -vr ./node_modules/@notes/compiler/dist/compiler/ ../published/compiler/`.quiet()
         })
-        .add('lib', async () => {
-          await $`rsync -vr ./node_modules/notes-frontend/dist/lib/ ../published/lib/`.quiet()
+        .add('static', async () => {
+          await $`rsync -vr ./node_modules/@notes/client/dist/static/ ../published/static/`.quiet()
         })
         .add('runtime', async () => {
-          await $`rsync -vr ./node_modules/notes-frontend/dist/runtime/ ../published/runtime/`.quiet()
+          await $`rsync -vr ./node_modules/@notes/client/dist/runtime/ ../published/runtime/`.quiet()
         }),
     )
 
@@ -122,15 +123,6 @@ class StaticSiteGenerator {
 
       log('loading notes…')
       const notes = await this.cache.getNotesCompiled()
-
-      log('loading compiler…')
-      const compiler = await getCompiler()
-
-      log('loading template…')
-      const template = await Bun.file(
-        'node_modules/notes-frontend/dist/index.html',
-      ).text()
-
       const publicIds = new Set(Object.keys(tree.nodes))
 
       const push = async (note: Exclude<typeof notes, null>[number]) => {
@@ -139,11 +131,10 @@ class StaticSiteGenerator {
         }
         const slug = note.id
         const compiled = JSON.parse(note.compiled)
-        const html = compiler.applyTemplate({
+        const html = generateHtml({
           slug,
-          template,
           compiled,
-          publicTree: tree,
+          // publicTree: tree,
         })
         writeFileSync(`../published/${slug}.html`, html)
         if (slug === 'HomePage') {
@@ -156,7 +147,7 @@ class StaticSiteGenerator {
         publicIds.has(note.id),
       )
       await pMap(notesToPublish, push, { concurrency: 4 })
-      writeFileSync('../published/404.html', template)
+      writeFileSync('../published/404.html', generateHtml())
       log('done')
     })
     return tasks
