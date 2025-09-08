@@ -6,9 +6,9 @@
     "dev": "bun run --watch src/index.ts"
   },
   "dependencies": {
-    "@notes/client": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904193332/notes-client-0.0.250904193332.tgz",
-    "@notes/compiler": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904193332/notes-compiler-0.0.250904193332.tgz",
-    "@notes/html-generator": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250904193332/notes-html-generator-0.0.250904193332.tgz",
+    "@notes/client": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250908112543/notes-client-0.0.250908112543.tgz",
+    "@notes/compiler": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250908112543/notes-compiler-0.0.250908112543.tgz",
+    "@notes/html-generator": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.250908112543/notes-html-generator-0.0.250908112543.tgz",
     "@elysiajs/cors": "^1.1.0",
     "@elysiajs/eden": "^1.1.2",
     "@elysiajs/static": "^1.1.0",

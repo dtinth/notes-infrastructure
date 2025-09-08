@@ -125,6 +125,17 @@ class StaticSiteGenerator {
       const notes = await this.cache.getNotesCompiled()
       const publicIds = new Set(Object.keys(tree.nodes))
 
+      const written = new Map<string, { sourceSlug: string }>()
+      const write = (filename: string, content: string, sourceSlug: string) => {
+        const alreadyWritten = written.get(filename)
+        if (alreadyWritten) {
+          throw new Error(
+            `${filename} already written by ${alreadyWritten.sourceSlug}, now by ${sourceSlug}`,
+          )
+        }
+        written.set(filename, { sourceSlug })
+        writeFileSync(`../published/${filename}`, content)
+      }
       const push = async (note: Exclude<typeof notes, null>[number]) => {
         if (!note.compiled) {
           return
@@ -136,9 +147,14 @@ class StaticSiteGenerator {
           compiled,
           // publicTree: tree,
         })
-        writeFileSync(`../published/${slug}.html`, html)
+        write(`${slug}.html`, html, slug)
         if (slug === 'HomePage') {
-          writeFileSync('../published/index.html', html)
+          write('index.html', html, slug)
+        }
+        if (Array.isArray(compiled.frontMatter?.aliases)) {
+          for (const alias of compiled.frontMatter.aliases) {
+            write(`${alias}.html`, html, slug)
+          }
         }
         log(`generated ${slug}.html`)
       }

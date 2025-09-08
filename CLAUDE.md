@@ -360,6 +360,7 @@ curl -s "https://raw.githubusercontent.com/dtinth/dt.in.th/refs/heads/master/{sl
 2. **Preserve ALL content** - including complete submission texts, lyrics, etc.
 3. **Topic linking**: Link only the FIRST occurrence of topic words (e.g., first "song" → `[song](Songs)`) to avoid link spam
 4. **Cross-references**: Update referring pages to link to new note name
+5. **Image links**: Prefix relative image paths (e.g., `/uploads/image.jpg`) with `https://dt.in.th` to make them absolute URLs
 
 ### Songs-Specific Workflow
 
