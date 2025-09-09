@@ -201,10 +201,10 @@ class StaticSiteGenerator {
       )
     })
     tasks.add('CNAME', async () => {
-      writeFileSync('../published/CNAME', 'notes.dt.in.th')
+      writeFileSync('../published/CNAME', 'dt.in.th')
     })
     tasks.add('.nojekyll', async () => {
-      writeFileSync('../published/.nojekyll', 'notes.dt.in.th')
+      writeFileSync('../published/.nojekyll', 'dt.in.th')
     })
     return tasks
   }
