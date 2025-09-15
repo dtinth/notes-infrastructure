@@ -168,8 +168,11 @@ The notes system supports several custom Markdown extensions:
 
 ### Grid System
 
-- **Syntax**: `<r-grid columns="3">` with `<r-cell>` elements
-- **Usage**: Occasionally used (24 occurrences across 7 files)
+- **Syntax**: Use Tailwind CSS classes for grid layouts
+- **Common patterns**:
+  - Two-column responsive: `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`
+  - Three-column: `<div class="grid grid-cols-3 gap-4">`
+  - Complex layouts: `<div class="grid grid-cols-1 lg:grid-cols-24 gap-4">` with `lg:col-span-N`
 
 ### Callouts (Info Boxes)
 

@@ -36,7 +36,7 @@ class StaticSiteGenerator {
     })
     .define('getNotesCompiled', async () => {
       return unwrap(
-        await supabase.from('notes_contents').select('id, compiled'),
+        await supabase.from('notes_contents').select('id, compiled, source'),
       )
     })
 
@@ -148,6 +148,7 @@ class StaticSiteGenerator {
           // publicTree: tree,
         })
         write(`${slug}.html`, html, slug)
+        write(`${slug}.md`, note.source, slug)
         if (slug === 'HomePage') {
           write('index.html', html, slug)
         }
@@ -180,7 +181,7 @@ class StaticSiteGenerator {
         '../published/api/sitemap.txt',
         Object.keys(tree.nodes)
           .map((id) => {
-            return `https://notes.dt.in.th/${id}`
+            return `https://dt.in.th/${id}`
           })
           .join('\n'),
       )
@@ -217,7 +218,7 @@ class StaticSiteGenerator {
     const feed = new RSS({
       title: 'dtinth',
       description: 'Thai Pangsakulyanont’s writings',
-      feed_url: 'https://notes.dt.in.th/api/recent.xml',
+      feed_url: 'https://dt.in.th/api/recent.xml',
       site_url: 'https://dt.in.th',
     })
     const notes = (await this.cache.getNotesCompiled()) || []
@@ -226,12 +227,12 @@ class StaticSiteGenerator {
     for (const m of source.matchAll(
       /^- (\d\d\d\d-\d\d-\d\d): \[(.*?)\]\(([^)\s]+)\)/gm,
     )) {
-      const url = new URL(m[3], 'https://notes.dt.in.th/').toString()
+      const url = new URL(m[3], 'https://dt.in.th/').toString()
       const compilation = noteMap.get(m[3])?.compiled
       const html = compilation ? JSON.parse(compilation).html : ''
       const options = {
         title: m[2],
-        description: `<a href="${url}">[Read on notes.dt.in.th]</a>${html}`,
+        description: `<a href="${url}">[Read on dt.in.th]</a>${html}`,
         url: url,
         date: new Date(m[1] + 'T00:00:00Z'),
       }
