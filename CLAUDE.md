@@ -233,6 +233,120 @@ The notes system supports several custom Markdown extensions:
 :::
 ```
 
+## Creating Interactive Notes
+
+Notes can include interactive Vue components for tools, calculators, visualizers, and demonstrations. This section documents patterns for creating these interactive elements.
+
+### Basic Structure
+
+Interactive notes use `<script setup>` blocks with Vue 3 composition API. Markdown and interactive content can coexist in the same note.
+
+**Examples**: [QRCode](QRCode), [MMLPlayer](MMLPlayer), [M3DynamicColorJS](M3DynamicColorJS)
+
+### Key Patterns
+
+#### Lazy Loading Libraries from CDN
+
+Load large libraries only when needed using `await import()` in `Vue.onMounted()`:
+
+```js
+<script setup>
+  const libs = Vue.ref(null)
+
+  Vue.onMounted(async () => {
+    libs.value = {
+      tone: await import('https://cdn.jsdelivr.net/npm/tone@15.1.22/+esm'),
+      mml: await import('https://cdn.jsdelivr.net/npm/mml-iterator@1.1.0/+esm')
+    }
+  })
+</script>
+```
+
+**Benefits**: Avoids blocking page load for notes that don't use the feature; multiple libraries can be loaded in parallel.
+
+#### Loading State UI
+
+Show a loading indicator while libraries are being fetched:
+
+```js
+const libLoaded = Vue.ref(false)
+
+Vue.onMounted(async () => {
+  const mod = await import('https://cdn.jsdelivr.net/npm/library@1.0/+esm')
+  libLoaded.value = true
+})
+```
+
+```html
+<input :disabled="!libLoaded" />
+<div v-if="!libLoaded" style="color: #8b8685;">Loading library…</div>
+```
+
+#### URL Hash for Shareable State
+
+Use `location.hash` with `URLSearchParams` to persist state and enable sharing:
+
+```js
+const mmlInput = Vue.ref('default value')
+
+const saveToHash = () => {
+  location.hash = `mml=${encodeURIComponent(mmlInput.value)}`
+}
+
+const loadFromHash = () => {
+  const hash = location.hash.slice(1)
+  const params = new URLSearchParams(hash)
+  const saved = params.get('mml')
+  if (saved) {
+    mmlInput.value = decodeURIComponent(saved)
+  }
+}
+
+Vue.onMounted(() => {
+  loadFromHash()
+  window.addEventListener('hashchange', loadFromHash)
+})
+
+Vue.onUnmounted(() => {
+  window.removeEventListener('hashchange', loadFromHash)
+})
+```
+
+#### Watchers for Reactive Updates
+
+Use `Vue.watch()` to respond to state changes:
+
+```js
+const input = Vue.ref('')
+const output = Vue.ref('')
+
+Vue.watch(input, (newValue) => {
+  if (newValue) {
+    output.value = processValue(newValue)
+  }
+})
+```
+
+#### Output as Data URL
+
+For SVG or image output, use `encodeURIComponent()` to create data URLs:
+
+```js
+const generateQR = () => {
+  const svg = renderSVG(text)
+  qrDataUrl.value = 'data:image/svg+xml,' + encodeURIComponent(svg)
+}
+```
+
+### Guidelines
+
+1. **Keep notes readable** - Interactive elements should enhance, not overwhelm. Static documentation can appear before or after.
+2. **Disable inputs during processing** - Prevent interaction while operations are running.
+3. **Error handling** - Display user-friendly error messages for failed operations.
+4. **Performance** - Use lazy loading for large libraries. Consider debouncing watchers for expensive operations.
+5. **Accessibility** - Ensure interactive elements have proper labels and ARIA attributes.
+6. **No dependencies** - Prefer CDN-based libraries to avoid build complexity. Use ESM imports when available.
+
 ## Guidelines for Content Creation
 
 When helping create or edit notes:

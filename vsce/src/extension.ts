@@ -1,7 +1,6 @@
-import * as vscode from 'vscode'
 import axios from 'axios'
 import * as path from 'path'
-import * as jsonwebtoken from 'jsonwebtoken'
+import * as vscode from 'vscode'
 import { NoteSidebarItem } from './NoteSidebarItem'
 import { runSearch } from './noteSearch'
 
@@ -114,12 +113,8 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showErrorMessage('No active note')
         return
       }
-      const jwt = jsonwebtoken.sign({ id }, getSecrets().previewSigningSecret, {
-        algorithm: 'HS256',
-        expiresIn: 5 * 86400,
-      })
       vscode.env.openExternal(
-        vscode.Uri.parse('https://notes.dt.in.th/private/' + jwt)
+        vscode.Uri.parse('https://dt.in.th/private/' + id)
       )
     }),
     vscode.commands.registerCommand('dtinth-notes.search', async () => {
