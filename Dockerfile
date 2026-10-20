@@ -1,3 +1,10 @@
+FROM oven/bun:1.4.3-debian AS backoffice
+WORKDIR /app
+COPY package.json bun.lock .npmrc ./
+RUN bun install --frozen-lockfile
+COPY backoffice ./backoffice
+RUN bun run build:backoffice
+
 FROM oven/bun:1.4.3-debian
 
 RUN apt-get update \
@@ -8,6 +15,7 @@ WORKDIR /app
 COPY package.json bun.lock .npmrc ./
 RUN bun install --frozen-lockfile --production
 COPY src ./src
+COPY --from=backoffice /app/backoffice/dist ./backoffice/dist
 
 # Deployed by Dokploy. There, set:
 # - the run user to the uid:gid that owns the vault on the host

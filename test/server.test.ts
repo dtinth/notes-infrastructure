@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'bun:test'
-import { cpSync, existsSync, mkdtempSync, readFileSync } from 'fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { createApp } from '../src/server'
@@ -109,5 +109,31 @@ describe('api', () => {
 
   test('requires auth', async () => {
     expect((await s.request('GET', '/api/notes', undefined, '')).status).toBe(401)
+  })
+})
+
+describe('backoffice', () => {
+  test('serves files under /admin/, falling back to the app shell', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'notes-backoffice-'))
+    mkdirSync(join(dir, 'assets'))
+    writeFileSync(join(dir, 'index.html'), 'shell')
+    writeFileSync(join(dir, 'assets/app.js'), 'js')
+    writeFileSync(join(dir, '..', 'secret.txt'), 'secret')
+    const app = createApp({
+      vault: new VaultIndex(s.dir),
+      store: new MemoryStore(),
+      compile: async () => '',
+      compilerVersion: 'test',
+      apiKey,
+      adminUid: 'admin',
+      getSupabaseUserId: async () => 'admin',
+      backofficeDir: dir,
+    })
+    const get = async (path: string) =>
+      (await app.handle(new Request(`http://localhost${path}`))).text()
+    expect(await get('/admin/')).toBe('shell')
+    expect(await get('/admin/assets/app.js')).toBe('js')
+    expect(await get('/admin/some/route')).toBe('shell')
+    expect(await get('/admin/..%2Fsecret.txt')).toBe('shell')
   })
 })

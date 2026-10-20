@@ -2,6 +2,8 @@ import { compileNote, compilerVersion } from './compiler'
 import { debounced } from './debounce'
 import { GitRepo, type TokenProvider } from './git'
 import { GitHubApp, parseGitHubRepo } from './githubApp'
+import { join } from 'path'
+import { renderPreview } from './preview'
 import { publishSite } from './publishSite'
 import { createApp } from './server'
 import { productionSupabaseUrl, SupabaseStore } from './store'
@@ -11,6 +13,11 @@ import { VaultSync } from './vaultSync'
 // Public anon key of the production project, as used by the frontend.
 const productionAnonKey =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0cnFoanJtbXFycWFjY2NoeW5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NTkxOTk3NDIsImV4cCI6MTk3NDc3NTc0Mn0.VEdURpInV9dowpoMkHopAzpiBtNnRXDgO6hRfy1ZSHY'
+
+// Google OAuth client the frontend signs in with. Its authorized JavaScript
+// origins must include the backoffice's origin.
+const productionGoogleClientId =
+  '347735770628-4n43ifcg3mmce5ema444thhosdtoougl.apps.googleusercontent.com'
 
 function requireEnv(name: string) {
   const value = process.env[name]
@@ -104,6 +111,14 @@ export async function serve() {
     },
     onPublished: site?.trigger,
     getStatus: () => ({ ...status, vault: vaultSync?.status }),
+    renderPreview,
+    backofficeConfig: {
+      supabaseUrl,
+      supabaseAnonKey: anonKey,
+      googleClientId: process.env.GOOGLE_CLIENT_ID || productionGoogleClientId,
+    },
+    backofficeDir:
+      process.env.NOTES_BACKOFFICE_DIR || join(import.meta.dir, '../backoffice/dist'),
     retrySync: vaultSync && (() => vaultSync.retry()),
   })
   app.listen({ port: Number(process.env.PORT || 21024), hostname: '0.0.0.0' })

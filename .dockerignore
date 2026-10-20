@@ -4,3 +4,4 @@ dist
 legacy
 supabase
 .git
+backoffice/dist

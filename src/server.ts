@@ -1,4 +1,6 @@
 import { cors } from '@elysiajs/cors'
+import { existsSync, statSync } from 'fs'
+import { join, resolve, sep } from 'path'
 import { Elysia, t } from 'elysia'
 import { mintAccessToken, verifyAccessToken } from './accessToken'
 import type { CompileFn } from './compiler'
@@ -23,6 +25,12 @@ export interface ServerDeps {
   getStatus?: () => Record<string, unknown>
   /** Resumes vault sync after a conflict was resolved by hand. */
   retrySync?: () => Promise<unknown>
+  /** Renders a note's source as its page, for previews. */
+  renderPreview?: (source: string, id: string) => Promise<{ html: string; errors: string[] }>
+  /** Public settings the backoffice needs to sign in. */
+  backofficeConfig?: Record<string, string>
+  /** Directory with the built backoffice, served at /admin/. */
+  backofficeDir?: string
 }
 
 export function createApp(deps: ServerDeps) {
@@ -59,7 +67,21 @@ export function createApp(deps: ServerDeps) {
   return (
     new Elysia()
       .use(cors())
-      .get('/', () => 'notes')
+      .get('/', ({ redirect }) => redirect('/admin/'))
+      .get('/admin/*', ({ params, set }) => {
+        if (!deps.backofficeDir) {
+          set.status = 'Not Found'
+          return 'The backoffice is not built.'
+        }
+        // An app route or a missing file falls back to the app shell.
+        const root = resolve(deps.backofficeDir)
+        const path = resolve(root, params['*'])
+        if (path.startsWith(root + sep) && existsSync(path) && statSync(path).isFile()) {
+          return Bun.file(path)
+        }
+        return Bun.file(join(root, 'index.html'))
+      })
+      .get('/backoffice/config', () => deps.backofficeConfig ?? {})
 
       // Exchanges a Supabase session for a notes session (frontend contract).
       .post(
@@ -144,7 +166,18 @@ export function createApp(deps: ServerDeps) {
             { body: t.Object({ ids: t.Optional(t.Array(t.String())) }) },
           )
           .get('/status', () => ({ compilerVersion, ...deps.getStatus?.() }))
-          .post('/sync/retry', async () => ({ vault: await deps.retrySync?.() })),
+          .post('/sync/retry', async () => ({ vault: await deps.retrySync?.() }))
+          .post(
+            '/preview',
+            async ({ body, set }) => {
+              if (!deps.renderPreview) {
+                set.status = 'Not Implemented'
+                return { error: 'Preview is not available' }
+              }
+              return deps.renderPreview(body.source, body.id)
+            },
+            { body: t.Object({ id: t.String(), source: t.String() }) },
+          ),
       )
   )
 }

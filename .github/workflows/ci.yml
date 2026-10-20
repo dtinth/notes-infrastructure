@@ -13,6 +13,7 @@ jobs:
       - uses: jdx/mise-action@v5
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
+      - run: bun run build:backoffice
       - name: Start local Supabase
         run: npx -y supabase@2.121.0 start -x imgproxy,edge-runtime,logflare,vector,supavisor,postgres-meta
       - name: Test (including integration tests)
