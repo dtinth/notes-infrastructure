@@ -346,6 +346,7 @@ const generateQR = () => {
 4. **Performance** - Use lazy loading for large libraries. Consider debouncing watchers for expensive operations.
 5. **Accessibility** - Ensure interactive elements have proper labels and ARIA attributes.
 6. **No dependencies** - Prefer CDN-based libraries to avoid build complexity. Use ESM imports when available.
+7. **Blank lines in templates** - Blank lines within HTML template sections can break markdown blocks. Blank lines are fine within `<script setup>` blocks, but remove them from the HTML/Vue template to keep blocks intact.
 
 ## Guidelines for Content Creation
 

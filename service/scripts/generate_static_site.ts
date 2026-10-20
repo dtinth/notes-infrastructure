@@ -3,7 +3,7 @@ import xmlPlugin from '@prettier/plugin-xml'
 import { stringify } from '@thai/funny-json'
 import { createCache } from 'async-cache-dedupe'
 import { $ } from 'bun'
-import { readFileSync, writeFileSync } from 'fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'fs'
 import pMap from 'p-map'
 import prettier from 'prettier'
 import RSS from 'rss'
@@ -206,6 +206,15 @@ class StaticSiteGenerator {
     })
     tasks.add('.nojekyll', async () => {
       writeFileSync('../published/.nojekyll', 'dt.in.th')
+    })
+    tasks.add('.well-known/matrix/client', async () => {
+      mkdirSync('../published/.well-known/matrix', { recursive: true })
+      writeFileSync(
+        '../published/.well-known/matrix/client',
+        JSON.stringify({
+          'm.homeserver': { base_url: 'https://matrix.lighthouse.d4h.cc' },
+        }),
+      )
     })
     return tasks
   }
