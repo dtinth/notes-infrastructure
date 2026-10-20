@@ -1,7 +1,8 @@
 import { compileMarkdown } from '@notes/compiler/dist/compiler/index.js'
 import { resolve } from 'path'
-import { compileNote, compilerVersion } from './compiler'
-import { apply, computePlan, formatPlanItem } from './plan'
+import { createClient } from './client'
+import { compilerVersion } from './compiler'
+import { computePlan, formatPlanItem } from './plan'
 import { serve } from './serve'
 import { buildSite } from './site'
 import { SupabaseStore } from './store'
@@ -40,14 +41,13 @@ switch (command) {
     break
   }
   case 'plan': {
-    const store = new SupabaseStore()
-    const plan = computePlan(
-      readVault(vaultDir),
-      await store.listRows(),
-      compilerVersion,
-    )
-    for (const item of plan) console.log(formatPlanItem(item))
-    const count = (op: string) => plan.filter((i) => i.op === op).length
+    // --direct reads Supabase without a server, e.g. to check for a
+    // zero-change plan before cutover. Needs SUPABASE_API_KEY.
+    const items = args.includes('--direct')
+      ? computePlan(readVault(vaultDir), await new SupabaseStore().listRows(), compilerVersion)
+      : (await createClient().plan()).items
+    for (const item of items) console.log(formatPlanItem(item))
+    const count = (op: string) => items.filter((i) => i.op === op).length
     console.log(
       `${count('create')} to create, ${count('update')} to update, ` +
         `${count('delete')} to delete, ${count('recompile')} to recompile`,
@@ -55,14 +55,17 @@ switch (command) {
     break
   }
   case 'apply': {
-    await apply({
-      store: new SupabaseStore(),
-      vault: readVault(vaultDir),
-      compile: compileNote,
-      compilerVersion,
-      ids: args.length ? args : undefined,
-      log: console.log,
-    })
+    const { lines } = await createClient().apply(args.length ? args : undefined)
+    for (const line of lines) console.log(line)
+    console.log(lines.length ? `applied ${lines.length}` : 'nothing to apply')
+    break
+  }
+  case 'status': {
+    console.log(JSON.stringify(await createClient().status(), null, 2))
+    break
+  }
+  case 'sync-retry': {
+    console.log(JSON.stringify(await createClient().retrySync(), null, 2))
     break
   }
   case 'serve': {
@@ -70,8 +73,19 @@ switch (command) {
     break
   }
   default:
-    console.error(
-      'Usage: notes <serve | index | compile <id> | build [outDir] | plan | apply [id...]>',
-    )
+    console.error(`Usage: notes <command>
+
+Talking to a running server (NOTES_URL, NOTES_API_KEY):
+  plan             what would be published, updated or unpublished
+  apply [id...]    apply the plan, or only for these notes
+  status           vault sync and site state
+  sync-retry       resume vault sync after fixing a conflict
+
+Local (NOTES_VAULT, or the current directory):
+  serve            run the server
+  plan --direct    plan against Supabase without a server (SUPABASE_API_KEY)
+  index            list notes as private, listed or unlisted
+  compile <id>     print a note's compiled output
+  build [outDir]   build the static site from public notes`)
     process.exit(1)
 }

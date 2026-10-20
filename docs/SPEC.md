@@ -53,11 +53,11 @@ Publishing is selective, per note (Q7). The server diffs desired state (vault) a
 - Then recompute derived data from the **published rows**, not from the vault, so a published note never exposes an unpublished note’s title or links (Q8): search keys, `notes.tree.json`, `notes.sitegraph.json`, `notes.index.json`.
 - Then schedule a static site rebuild (debounced: applying several items in a row gives one commit to dt.in.th) (Q10).
 
-When the compiler version changes, every row is recompiled from its stored `source`. That is not a new snapshot from the vault (Q14).
+When the compiler version changes, every row is recompiled from its stored `source`. That is not a new snapshot from the vault (Q14). The compiler version is the pinned `@notes/compiler` release, not a hand-bumped number: legacy’s `'7'` went stale, leaving 109 live pages with output from an older compiler.
 
 Interfaces:
 
-- CLI: `notes plan`, `notes apply [id…]`.
+- CLI: `notes plan`, `notes apply [id…]` (through the server), and `notes plan --direct` (straight against Supabase, for the cutover check).
 - Backoffice: the plan view, with “changed since publish” badges and an “apply all” action, which keeps the old all-at-once flow one click away (Q11).
 
 ## Static site
@@ -76,11 +76,11 @@ Served by the same server. A Vue 3 + Vite SPA (Q6, Q17):
 
 - list and search notes
 - edit Markdown in CodeMirror; saves write the file
-- live preview via `@notes/compiler` in the browser
+- live preview: the server renders the full page, with a `<base>` pointing at dt.in.th so it uses the live site’s assets (simpler than compiling in the browser, and identical to the published page)
 - the plan view: publish status, apply one or all
 - the vault sync status / conflict banner
 
-Auth: the existing Supabase login (Google), checked against `SUPABASE_ADMIN_UID`, which then mints a short-lived JWT, same as legacy `/auth/supabase`.
+Auth: the existing Supabase login (Google), checked against `SUPABASE_ADMIN_UID`, which then mints a short-lived JWT, same as legacy `/auth/supabase`. `NOTES_API_KEY` also works, for when Google sign-in isn’t available. The Google OAuth client must list the backoffice’s origin.
 
 ## Private API (frontend contract, unchanged)
 
