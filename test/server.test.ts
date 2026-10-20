@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'bun:test'
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { createApp } from '../src/server'
@@ -107,6 +107,18 @@ describe('api', () => {
     expect(existsSync(join(s.dir, '..', 'escape.md'))).toBe(false)
   })
 
+  test('ignores symlinked notes and never writes through them', async () => {
+    const outside = join(s.dir, '..', `outside-${Date.now()}.txt`)
+    writeFileSync(outside, '---\npublic: true\n---\nsecret')
+    symlinkSync(outside, join(s.dir, 'Link.md'))
+    s.vault.refresh('Link')
+    expect((await s.request('GET', '/api/notes/Link')).status).toBe(404)
+
+    const saved = await s.request('PUT', '/api/notes/Link', { source: 'overwritten' })
+    expect(saved.status).toBe(500)
+    expect(readFileSync(outside, 'utf-8')).toContain('secret')
+  })
+
   test('requires auth', async () => {
     expect((await s.request('GET', '/api/notes', undefined, '')).status).toBe(401)
   })
@@ -135,5 +147,8 @@ describe('backoffice', () => {
     expect(await get('/admin/assets/app.js')).toBe('js')
     expect(await get('/admin/some/route')).toBe('shell')
     expect(await get('/admin/..%2Fsecret.txt')).toBe('shell')
+
+    const response = await app.handle(new Request('http://localhost/admin/'))
+    expect(response.headers.get('x-frame-options')).toBe('DENY')
   })
 })

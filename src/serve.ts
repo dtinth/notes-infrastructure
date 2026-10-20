@@ -51,6 +51,10 @@ export async function serve() {
       return repo ? githubApp.getToken(repo) : undefined
     })
 
+  const apiKey = requireEnv('NOTES_API_KEY')
+  // It also signs session tokens, so a short one could be guessed offline.
+  if (apiKey.length < 32) log('warning: NOTES_API_KEY is shorter than 32 characters')
+
   const vault = new VaultIndex(vaultDir)
   vault.watch()
   log(`indexed ${vault.notes.size} notes in ${vaultDir}`)
@@ -100,7 +104,7 @@ export async function serve() {
     store,
     compile: compileNote,
     compilerVersion,
-    apiKey: requireEnv('NOTES_API_KEY'),
+    apiKey,
     adminUid: requireEnv('SUPABASE_ADMIN_UID'),
     async getSupabaseUserId(accessToken) {
       const response = await fetch(`${supabaseUrl}/auth/v1/user`, {

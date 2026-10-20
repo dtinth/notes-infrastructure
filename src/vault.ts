@@ -1,5 +1,5 @@
 import { createHash } from 'crypto'
-import { readdirSync, readFileSync } from 'fs'
+import { lstatSync, readdirSync, readFileSync } from 'fs'
 import { basename, extname, join } from 'path'
 import parseFrontmatter from 'gray-matter'
 import { MarkdownContent } from './MarkdownContent'
@@ -27,12 +27,30 @@ export interface VaultNote {
   frontMatter: Record<string, any>
 }
 
+/**
+ * Note ids are plain file names: no path separators or control characters,
+ * no leading dot. Ids and aliases become file names in the site, too.
+ */
+export function isValidNoteId(id: string) {
+  return /^[^/\\\x00-\x1f\x7f]+$/.test(id) && !id.startsWith('.')
+}
+
+/**
+ * Reads a note file, or returns undefined unless it is a regular file.
+ * Symlinks are skipped: one pulled into the vault could point anywhere.
+ */
+export function readNoteFile(path: string) {
+  const stat = lstatSync(path, { throwIfNoEntry: false })
+  return stat?.isFile() ? readFileSync(path, 'utf-8') : undefined
+}
+
 export function readVault(dir: string): Map<string, VaultNote> {
   const notes = new Map<string, VaultNote>()
   for (const file of readdirSync(dir)) {
     if (extname(file) !== '.md') continue
     const id = basename(file, '.md')
-    notes.set(id, parseNote(id, readFileSync(join(dir, file), 'utf-8')))
+    const source = isValidNoteId(id) ? readNoteFile(join(dir, file)) : undefined
+    if (source !== undefined) notes.set(id, parseNote(id, source))
   }
   return notes
 }

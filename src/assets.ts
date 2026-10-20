@@ -2,6 +2,7 @@ import { $ } from 'bun'
 import { cpSync, existsSync, mkdirSync, renameSync, rmSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
+import lock from '../bun.lock'
 import pkg from '../package.json'
 
 /**
@@ -33,10 +34,19 @@ async function ensurePackage(name: PackageName) {
   if (!response.ok) {
     throw new Error(`Failed to download ${url}: ${response.status}`)
   }
+  // These scripts end up on the live site, so check them against the
+  // integrity hash bun.lock recorded for the same tarball.
+  const data = new Uint8Array(await response.arrayBuffer())
+  const integrity = `sha512-${new Bun.CryptoHasher('sha512').update(data).digest('base64')}`
+  const expected = (lock.packages as Record<string, unknown[]>)[name]?.[2]
+  if (integrity !== expected) {
+    throw new Error(`${url} does not match bun.lock: got ${integrity}, expected ${expected}`)
+  }
+
   const tmp = `${dir}.tmp-${process.pid}`
   mkdirSync(tmp, { recursive: true })
   const tgz = join(tmp, 'package.tgz')
-  await Bun.write(tgz, response)
+  await Bun.write(tgz, data)
   await $`tar -xzf ${tgz} -C ${tmp}`.quiet()
   rmSync(tgz)
   renameSync(tmp, dir)

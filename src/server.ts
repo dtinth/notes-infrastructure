@@ -1,4 +1,5 @@
 import { cors } from '@elysiajs/cors'
+import { timingSafeEqual } from 'crypto'
 import { existsSync, statSync } from 'fs'
 import { join, resolve, sep } from 'path'
 import { Elysia, t } from 'elysia'
@@ -6,7 +7,8 @@ import { mintAccessToken, verifyAccessToken } from './accessToken'
 import type { CompileFn } from './compiler'
 import { apply, computePlan, formatPlanItem } from './plan'
 import type { PublishedStore } from './store'
-import { isValidNoteId, type VaultIndex } from './vaultIndex'
+import { isValidNoteId } from './vault'
+import type { VaultIndex } from './vaultIndex'
 
 export interface ServerDeps {
   vault: VaultIndex
@@ -36,10 +38,16 @@ export interface ServerDeps {
 export function createApp(deps: ServerDeps) {
   const { vault, store, compile, compilerVersion, apiKey } = deps
 
+  const apiKeyBytes = Buffer.from(apiKey)
+  const isApiKey = (token: string) => {
+    const bytes = Buffer.from(token)
+    return bytes.length === apiKeyBytes.length && timingSafeEqual(bytes, apiKeyBytes)
+  }
+
   const isAuthorized = async (authorization: string | undefined) => {
     const token = authorization?.match(/^Bearer (.+)$/)?.[1]
     if (!token) return false
-    if (token === apiKey) return true
+    if (isApiKey(token)) return true
     try {
       await verifyAccessToken(token, apiKey)
       return true
@@ -69,6 +77,9 @@ export function createApp(deps: ServerDeps) {
       .use(cors())
       .get('/', ({ redirect }) => redirect('/admin/'))
       .get('/admin/*', ({ params, set }) => {
+        // Nobody gets to frame the backoffice and trick a click on Publish.
+        set.headers['x-frame-options'] = 'DENY'
+        set.headers['content-security-policy'] = "frame-ancestors 'none'"
         if (!deps.backofficeDir) {
           set.status = 'Not Found'
           return 'The backoffice is not built.'

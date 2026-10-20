@@ -12,7 +12,7 @@ import { generateSearchIndex } from './search'
 import { generateSitegraph } from './sitegraph'
 import { generatePublicTree } from './tree'
 import type { PublishedRow } from './store'
-import { parseNote, type VaultNote } from './vault'
+import { isValidNoteId, parseNote, type VaultNote } from './vault'
 
 type CompiledNote = Awaited<ReturnType<typeof compileMarkdown>>['compiled']
 
@@ -75,7 +75,11 @@ export async function buildSite(
   await copySiteAssets(outDir)
 
   const written = new Map<string, string>()
+  // Ids and aliases become file names, so one like `../x` must not get here.
   const write = (filename: string, content: string, sourceSlug: string) => {
+    if (!isValidNoteId(filename)) {
+      throw new Error(`${sourceSlug} would write an invalid file name: ${filename}`)
+    }
     const alreadyWrittenBy = written.get(filename)
     if (alreadyWrittenBy) {
       throw new Error(

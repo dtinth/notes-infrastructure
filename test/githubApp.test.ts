@@ -15,7 +15,8 @@ const fakeGitHub = Bun.serve({
     const { payload } = await jwtVerify(jwt, await importSPKI(spki, 'RS256'))
     if (payload.iss !== '12345') return new Response('bad iss', { status: 401 })
     const { pathname } = new URL(request.url)
-    requests.push(`${request.method} ${pathname}`)
+    const body = request.method === 'POST' ? ` ${await request.text()}` : ''
+    requests.push(`${request.method} ${pathname}${body}`)
     if (pathname === '/repos/dtinth/notes/installation') return Response.json({ id: 99 })
     if (pathname === '/app/installations/99/access_tokens') {
       return Response.json({
@@ -28,13 +29,13 @@ const fakeGitHub = Bun.serve({
 })
 afterAll(() => fakeGitHub.stop())
 
-test('mints an installation token with a PKCS#1 key, then caches it', async () => {
+test('mints a token scoped to one repo with a PKCS#1 key, then caches it', async () => {
   const app = new GitHubApp('12345', pkcs1, fakeGitHub.url.origin)
   expect(await app.getToken('dtinth/notes')).toBe('ghs_test')
   expect(await app.getToken('dtinth/notes')).toBe('ghs_test')
   expect(requests).toEqual([
     'GET /repos/dtinth/notes/installation',
-    'POST /app/installations/99/access_tokens',
+    'POST /app/installations/99/access_tokens {"repositories":["notes"],"permissions":{"contents":"write"}}',
   ])
 })
 
@@ -43,4 +44,5 @@ test('parseGitHubRepo', () => {
   expect(parseGitHubRepo('https://github.com/dtinth/notes.git')).toBe('dtinth/notes')
   expect(parseGitHubRepo('git@github.com:dtinth/notes.git')).toBe('dtinth/notes')
   expect(parseGitHubRepo('/tmp/remote.git')).toBeUndefined()
+  expect(parseGitHubRepo('https://evil.example/github.com/dtinth/notes')).toBeUndefined()
 })

@@ -8,7 +8,8 @@ import { GitRepo } from '../src/git'
 import { apply } from '../src/plan'
 import { publishSite } from '../src/publishSite'
 import { MemoryStore } from '../src/store'
-import { readVault } from '../src/vault'
+import { buildSite } from '../src/site'
+import { parseNote, readVault } from '../src/vault'
 
 test('publishes the site to the remote, once per change', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'notes-site-'))
@@ -34,3 +35,12 @@ test('publishes the site to the remote, once per change', async () => {
 
   expect(await publishSite(store, new GitRepo(site))).toBeNull()
 }, 60_000)
+
+test('refuses aliases that would write outside the site', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'notes-site-'))
+  const out = join(dir, 'site')
+  const source = '---\npublic: true\naliases: [../escape]\n---\n# Home'
+  const notes = new Map([['HomePage', parseNote('HomePage', source)]])
+  await expect(buildSite(notes, out)).rejects.toThrow('invalid file name')
+  expect(existsSync(join(dir, 'escape.html'))).toBe(false)
+})

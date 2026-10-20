@@ -3,7 +3,8 @@ import { importPKCS8, SignJWT } from 'jose'
 
 /**
  * Mints installation tokens for a GitHub App, one per repository, cached
- * until shortly before they expire.
+ * until shortly before they expire. Each token only reaches its own
+ * repository's contents, even when the installation covers more.
  */
 export class GitHubApp {
   private tokens = new Map<string, { token: string; expiresAt: number }>()
@@ -27,14 +28,18 @@ export class GitHubApp {
     const { token, expires_at } = await this.request<{
       token: string
       expires_at: string
-    }>('POST', `/app/installations/${installation.id}/access_tokens`)
+    }>('POST', `/app/installations/${installation.id}/access_tokens`, {
+      repositories: [repo.split('/')[1]],
+      permissions: { contents: 'write' },
+    })
     this.tokens.set(repo, { token, expiresAt: Date.parse(expires_at) })
     return token
   }
 
-  private async request<T>(method: string, path: string): Promise<T> {
+  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const response = await fetch(`${this.apiUrl}${path}`, {
       method,
+      body: body === undefined ? undefined : JSON.stringify(body),
       headers: {
         authorization: `Bearer ${await this.appJwt()}`,
         accept: 'application/vnd.github+json',
@@ -64,5 +69,7 @@ export class GitHubApp {
 
 /** `owner/name` of a GitHub remote URL, or undefined for other remotes. */
 export function parseGitHubRepo(remoteUrl: string) {
-  return remoteUrl.match(/github\.com[:/]([^/]+\/[^/]+?)(?:\.git)?\/?$/)?.[1]
+  return remoteUrl.match(
+    /^(?:https:\/\/github\.com\/|git@github\.com:)([^/]+\/[^/]+?)(?:\.git)?\/?$/,
+  )?.[1]
 }

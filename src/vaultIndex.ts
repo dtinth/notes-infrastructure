@@ -1,12 +1,7 @@
 import { watch } from 'chokidar'
-import { existsSync, readFileSync, writeFileSync } from 'fs'
+import { closeSync, constants, openSync, writeFileSync } from 'fs'
 import { basename, extname, join } from 'path'
-import { parseNote, readVault, type VaultNote } from './vault'
-
-/** Note ids are plain file names: no path separators, no leading dot. */
-export function isValidNoteId(id: string) {
-  return /^[^/\\\0]+$/.test(id) && !id.startsWith('.')
-}
+import { isValidNoteId, parseNote, readNoteFile, readVault, type VaultNote } from './vault'
 
 /** The vault, indexed in memory and kept fresh as files change. */
 export class VaultIndex {
@@ -33,9 +28,9 @@ export class VaultIndex {
 
   /** Re-reads one note from disk, removing it if the file is gone. */
   refresh(id: string) {
-    const path = this.pathOf(id)
-    if (existsSync(path)) {
-      this.notes.set(id, parseNote(id, readFileSync(path, 'utf-8')))
+    const source = isValidNoteId(id) ? readNoteFile(this.pathOf(id)) : undefined
+    if (source !== undefined) {
+      this.notes.set(id, parseNote(id, source))
     } else {
       this.notes.delete(id)
     }
@@ -44,7 +39,14 @@ export class VaultIndex {
 
   /** Saves a note's source, as the backoffice editor does. */
   write(id: string, source: string) {
-    writeFileSync(this.pathOf(id), source)
+    // O_NOFOLLOW: never write through a symlink to outside the vault.
+    const { O_WRONLY, O_CREAT, O_TRUNC, O_NOFOLLOW } = constants
+    const fd = openSync(this.pathOf(id), O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW, 0o666)
+    try {
+      writeFileSync(fd, source)
+    } finally {
+      closeSync(fd)
+    }
     this.refresh(id)
   }
 
