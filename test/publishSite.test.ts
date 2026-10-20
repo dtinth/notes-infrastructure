@@ -4,6 +4,7 @@ import { existsSync, mkdtempSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { compileNote } from '../src/compiler'
+import { GitRepo } from '../src/git'
 import { apply } from '../src/plan'
 import { publishSite } from '../src/publishSite'
 import { MemoryStore } from '../src/store'
@@ -22,7 +23,7 @@ test('publishes the site to the remote, once per change', async () => {
   await apply({ store, vault, compile: compileNote, compilerVersion: 'test' })
 
   const logs: string[] = []
-  const message = await publishSite(store, site, (m) => logs.push(m))
+  const message = await publishSite(store, new GitRepo(site), (m) => logs.push(m))
   expect(message).toMatch(/files changed/)
   expect(logs).toContain('compiled 0 notes, reused 4')
   expect(existsSync(join(site, 'Article.html'))).toBe(true)
@@ -31,5 +32,5 @@ test('publishes the site to the remote, once per change', async () => {
   const remoteLog = await $`git -C ${remote} log --oneline main`.text()
   expect(remoteLog.trim().split('\n')).toHaveLength(1)
 
-  expect(await publishSite(store, site)).toBeNull()
+  expect(await publishSite(store, new GitRepo(site))).toBeNull()
 }, 60_000)

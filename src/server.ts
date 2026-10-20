@@ -21,6 +21,8 @@ export interface ServerDeps {
   onPublished?: () => void
   /** Extra status to report, e.g. vault sync state. */
   getStatus?: () => Record<string, unknown>
+  /** Resumes vault sync after a conflict was resolved by hand. */
+  retrySync?: () => Promise<unknown>
 }
 
 export function createApp(deps: ServerDeps) {
@@ -141,7 +143,8 @@ export function createApp(deps: ServerDeps) {
             },
             { body: t.Object({ ids: t.Optional(t.Array(t.String())) }) },
           )
-          .get('/status', () => ({ compilerVersion, ...deps.getStatus?.() })),
+          .get('/status', () => ({ compilerVersion, ...deps.getStatus?.() }))
+          .post('/sync/retry', async () => ({ vault: await deps.retrySync?.() })),
       )
   )
 }

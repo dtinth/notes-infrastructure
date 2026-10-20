@@ -1,4 +1,4 @@
-import { GitRepo } from './git'
+import type { GitRepo } from './git'
 import { buildSiteFromRows } from './site'
 import type { PublishedStore } from './store'
 
@@ -9,11 +9,10 @@ import type { PublishedStore } from './store'
  */
 export async function publishSite(
   store: PublishedStore,
-  siteDir: string,
+  repo: GitRepo,
   log: (message: string) => void = () => {},
 ) {
-  await buildSiteFromRows(await store.getRows(), siteDir, { log })
-  const repo = new GitRepo(siteDir)
+  await buildSiteFromRows(await store.getRows(), repo.dir, { log })
   const message = await repo.commitAll()
   if (!message) {
     log('site unchanged')

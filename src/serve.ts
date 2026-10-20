@@ -1,9 +1,12 @@
 import { compileNote, compilerVersion } from './compiler'
 import { debounced } from './debounce'
+import { GitRepo, type TokenProvider } from './git'
+import { GitHubApp, parseGitHubRepo } from './githubApp'
 import { publishSite } from './publishSite'
 import { createApp } from './server'
 import { productionSupabaseUrl, SupabaseStore } from './store'
 import { VaultIndex } from './vaultIndex'
+import { VaultSync } from './vaultSync'
 
 // Public anon key of the production project, as used by the frontend.
 const productionAnonKey =
@@ -24,17 +27,54 @@ export async function serve() {
   const log = (message: string) =>
     console.log(`[${new Date().toISOString()}] ${message}`)
 
+  const githubApp = process.env.GITHUB_APP_ID
+    ? new GitHubApp(
+        process.env.GITHUB_APP_ID,
+        requireEnv('GITHUB_APP_PRIVATE_KEY'),
+      )
+    : undefined
+  const tokenFor = (dir: string): TokenProvider | undefined =>
+    githubApp &&
+    (async () => {
+      const remote = await new GitRepo(dir).git(['remote', 'get-url', 'origin'])
+      const repo = parseGitHubRepo(remote.trim())
+      return repo ? githubApp.getToken(repo) : undefined
+    })
+
   const vault = new VaultIndex(vaultDir)
   vault.watch()
   log(`indexed ${vault.notes.size} notes in ${vaultDir}`)
+
+  // NOTES_SYNC=0 turns vault sync off, e.g. when the vault isn't a git repo.
+  const vaultSync =
+    process.env.NOTES_SYNC === '0'
+      ? undefined
+      : new VaultSync(
+          new GitRepo(vaultDir, tokenFor(vaultDir)),
+          Number(process.env.NOTES_SYNC_IDLE_MS || 5 * 60_000),
+          log,
+        )
+  if (vaultSync) {
+    vault.onChange(() => vaultSync.trigger())
+    // Also pull changes made elsewhere when nothing happens locally.
+    setInterval(() => vaultSync.trigger(), 15 * 60_000)
+    vaultSync.trigger()
+  }
 
   const store = new SupabaseStore({ url: supabaseUrl })
   const status: Record<string, unknown> = {}
   const site = siteDir
     ? debounced(async () => {
-        status.site = { state: 'publishing', since: new Date().toISOString() }
-        const message = await publishSite(store, siteDir, log)
-        status.site = { state: 'idle', at: new Date().toISOString(), message }
+        const since = new Date().toISOString()
+        status.site = { state: 'publishing', since }
+        try {
+          const repo = new GitRepo(siteDir, tokenFor(siteDir))
+          const message = await publishSite(store, repo, log)
+          status.site = { state: 'idle', at: new Date().toISOString(), message }
+        } catch (error) {
+          status.site = { state: 'error', since, message: String(error) }
+          log(`site: publish failed: ${error}`)
+        }
       }, 10_000)
     : undefined
 
@@ -53,7 +93,8 @@ export async function serve() {
       return ((await response.json()) as { id: string }).id
     },
     onPublished: site?.trigger,
-    getStatus: () => status,
+    getStatus: () => ({ ...status, vault: vaultSync?.status }),
+    retrySync: vaultSync && (() => vaultSync.retry()),
   })
   app.listen({ port: Number(process.env.PORT || 21024), hostname: '0.0.0.0' })
   log(`listening on ${app.server?.url}`)
