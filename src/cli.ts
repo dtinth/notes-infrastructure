@@ -2,6 +2,7 @@ import { compileMarkdown } from '@notes/compiler/dist/compiler/index.js'
 import { generateHtml } from '@notes/html-generator'
 import { mkdirSync, writeFileSync } from 'fs'
 import { join, resolve } from 'path'
+import { copySiteAssets } from './assets'
 import { generatePublicTree } from './tree'
 import { readVault } from './vault'
 
@@ -43,6 +44,8 @@ switch (command) {
       console.log(`built ${id}.html`)
     }
     writeFileSync(join(outDir, 'api-tree.json'), JSON.stringify(tree, null, 2))
+    await copySiteAssets(outDir)
+    console.log('copied browser assets')
     break
   }
   default:
