@@ -1,4 +1,6 @@
 import { $ } from 'bun'
+import { existsSync } from 'fs'
+import { join } from 'path'
 
 /** Returns a GitHub token for pushing and pulling, if there is one. */
 export type TokenProvider = () => Promise<string | undefined>
@@ -40,6 +42,13 @@ export class GitRepo {
     if (!message) return null
     await this.git(['commit', '--quiet', '-m', message])
     return message
+  }
+
+  /** Clones `remote` into `dir` unless something is there already. */
+  async ensureCloned(remote: string) {
+    if (existsSync(join(this.dir, '.git'))) return
+    const auth = await this.authArgs()
+    await $`git ${auth} clone --quiet ${remote} ${this.dir}`.quiet()
   }
 
   async push() {

@@ -33,10 +33,13 @@ export async function serve() {
         requireEnv('GITHUB_APP_PRIVATE_KEY'),
       )
     : undefined
-  const tokenFor = (dir: string): TokenProvider | undefined =>
+  /** Token for the GitHub repo behind a remote URL, or a clone's origin. */
+  const tokenFor = (dirOrRemote: string): TokenProvider | undefined =>
     githubApp &&
     (async () => {
-      const remote = await new GitRepo(dir).git(['remote', 'get-url', 'origin'])
+      const remote = parseGitHubRepo(dirOrRemote)
+        ? dirOrRemote
+        : await new GitRepo(dirOrRemote).git(['remote', 'get-url', 'origin'])
       const repo = parseGitHubRepo(remote.trim())
       return repo ? githubApp.getToken(repo) : undefined
     })
@@ -59,6 +62,13 @@ export async function serve() {
     // Also pull changes made elsewhere when nothing happens locally.
     setInterval(() => vaultSync.trigger(), 15 * 60_000)
     vaultSync.trigger()
+  }
+
+  // The dt.in.th clone lives in the server's state volume, cloned on first run.
+  if (siteDir && process.env.NOTES_SITE_REMOTE) {
+    await new GitRepo(siteDir, tokenFor(process.env.NOTES_SITE_REMOTE)).ensureCloned(
+      process.env.NOTES_SITE_REMOTE,
+    )
   }
 
   const store = new SupabaseStore({ url: supabaseUrl })
