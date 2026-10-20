@@ -11,9 +11,35 @@ import { copySiteAssets } from './assets'
 import { generateSearchIndex } from './search'
 import { generateSitegraph } from './sitegraph'
 import { generatePublicTree } from './tree'
-import type { VaultNote } from './vault'
+import type { PublishedRow } from './store'
+import { parseNote, type VaultNote } from './vault'
 
 type CompiledNote = Awaited<ReturnType<typeof compileMarkdown>>['compiled']
+
+export interface BuildSiteOptions {
+  /**
+   * Compiled output already known for some notes, as stored in
+   * `notes_contents.compiled`. Notes without it are compiled here.
+   */
+  precompiled?: Map<string, string>
+  log?: (message: string) => void
+}
+
+/** Builds the site from published rows, reusing their compiled output. */
+export function buildSiteFromRows(
+  rows: PublishedRow[],
+  outDir: string,
+  options: Omit<BuildSiteOptions, 'precompiled'> = {},
+) {
+  const notes = new Map(rows.map((row) => [row.id, parseNote(row.id, row.source)]))
+  const precompiled = new Map<string, string>()
+  for (const row of rows) {
+    if (row.compiled && row.compiled_source_version === row.source_version) {
+      precompiled.set(row.id, row.compiled)
+    }
+  }
+  return buildSite(notes, outDir, { ...options, precompiled })
+}
 
 /**
  * Writes the whole static site for dt.in.th into `outDir`, matching what
@@ -24,19 +50,26 @@ type CompiledNote = Awaited<ReturnType<typeof compileMarkdown>>['compiled']
 export async function buildSite(
   notes: Map<string, VaultNote>,
   outDir: string,
-  options: { log?: (message: string) => void } = {},
+  options: BuildSiteOptions = {},
 ) {
   const log = options.log ?? (() => {})
   const tree = generatePublicTree(notes)
   const compiled = new Map<string, CompiledNote>()
+  let compiledHere = 0
   await pMap(
     notes.values(),
     async (note) => {
-      compiled.set(note.id, (await compileMarkdown(note.source, note.id)).compiled)
+      const stored = options.precompiled?.get(note.id)
+      if (stored) {
+        compiled.set(note.id, JSON.parse(stored))
+      } else {
+        compiled.set(note.id, (await compileMarkdown(note.source, note.id)).compiled)
+        compiledHere++
+      }
     },
     { concurrency: 4 },
   )
-  log(`compiled ${compiled.size} notes`)
+  log(`compiled ${compiledHere} notes, reused ${compiled.size - compiledHere}`)
 
   mkdirSync(join(outDir, 'api'), { recursive: true })
   await copySiteAssets(outDir)

@@ -20,9 +20,13 @@ const url = process.env.NOTES_TEST_SUPABASE_URL
 const apiKey = process.env.NOTES_TEST_SUPABASE_KEY
 const anonKey = process.env.NOTES_TEST_SUPABASE_ANON_KEY
 
-describe.skipIf(!url || !apiKey || !anonKey)('SupabaseStore', () => {
-  const admin = createClient(url!, apiKey!, { auth: { persistSession: false } })
-  const anon = createClient(url!, anonKey!, { auth: { persistSession: false } })
+const configured = !!(url && apiKey && anonKey)
+
+describe.skipIf(!configured)('SupabaseStore', () => {
+  // describe bodies run even when skipped, so only connect when configured.
+  if (!configured) return
+  const admin = createClient(url, apiKey, { auth: { persistSession: false } })
+  const anon = createClient(url, anonKey, { auth: { persistSession: false } })
   const store = new SupabaseStore({ url, apiKey })
   const vault = readVault(`${import.meta.dir}/../../example-vault`)
 
