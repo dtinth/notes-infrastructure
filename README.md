@@ -52,7 +52,7 @@ Dokploy builds the `Dockerfile`. The settings it needs (run user, mounts, env) a
 | `NOTES_API_KEY` | Signs backoffice sessions; also accepted as a bearer token by the API |
 | `SUPABASE_API_KEY` | Supabase service role key |
 | `SUPABASE_ADMIN_UID` | The Supabase user allowed into the backoffice and private notes |
-| `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY` | GitHub App installed on the vault repo and dtinth/dt.in.th, with contents read/write |
+| `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY` | GitHub App installed on the vault repo and dtinth/dt.in.th, with contents read/write. The key can be one line: `base64 -w0 key.pem`, or the PEM with `\n` escapes |
 | `NOTES_SITE_REMOTE` | Defaults to `https://github.com/dtinth/dt.in.th` |
 | `NOTES_SYNC_IDLE_MS` | How long the vault must be quiet before it is committed (default 5 minutes) |
 | `NOTES_SYNC` | `0` turns vault sync off |

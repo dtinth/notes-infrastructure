@@ -2,6 +2,7 @@ import { afterAll, expect, test } from 'bun:test'
 import { generateKeyPairSync } from 'crypto'
 import { importSPKI, jwtVerify } from 'jose'
 import { GitHubApp, parseGitHubRepo } from '../src/githubApp'
+import { decodePem } from '../src/serve'
 
 const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 })
 const pkcs1 = privateKey.export({ type: 'pkcs1', format: 'pem' }).toString()
@@ -45,4 +46,11 @@ test('parseGitHubRepo', () => {
   expect(parseGitHubRepo('git@github.com:dtinth/notes.git')).toBe('dtinth/notes')
   expect(parseGitHubRepo('/tmp/remote.git')).toBeUndefined()
   expect(parseGitHubRepo('https://evil.example/github.com/dtinth/notes')).toBeUndefined()
+})
+
+test('decodePem takes the key as is, with \\n escapes, or base64', () => {
+  const escaped = pkcs1.trim().replaceAll('\n', '\\n')
+  expect(decodePem(pkcs1)).toBe(pkcs1)
+  expect(decodePem(escaped)).toBe(pkcs1.trim())
+  expect(decodePem(Buffer.from(pkcs1).toString('base64'))).toBe(pkcs1)
 })

@@ -25,6 +25,17 @@ function requireEnv(name: string) {
   return value
 }
 
+/**
+ * A PEM from a one-line env var: as is, with `\n` escapes, or base64'd
+ * (`base64 -w0 key.pem`), since .env files and multiline values don't mix.
+ */
+export function decodePem(value: string) {
+  const pem = value.includes('-----BEGIN')
+    ? value
+    : Buffer.from(value, 'base64').toString('utf-8')
+  return pem.replaceAll('\\n', '\n')
+}
+
 /** `notes serve`: configured entirely from environment variables. */
 export async function serve() {
   const vaultDir = process.env.NOTES_VAULT || process.cwd()
@@ -37,7 +48,7 @@ export async function serve() {
   const githubApp = process.env.GITHUB_APP_ID
     ? new GitHubApp(
         process.env.GITHUB_APP_ID,
-        requireEnv('GITHUB_APP_PRIVATE_KEY'),
+        decodePem(requireEnv('GITHUB_APP_PRIVATE_KEY')),
       )
     : undefined
   /** Token for the GitHub repo behind a remote URL, or a clone's origin. */
