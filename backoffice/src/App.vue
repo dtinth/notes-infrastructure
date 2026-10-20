@@ -152,7 +152,7 @@ onUnmounted(() => clearInterval(poll))
 
 <template>
   <div v-if="!signedIn" class="login">
-    <h1>notes</h1>
+    <h1>📝 notes</h1>
     <div ref="googleButton"></div>
     <details>
       <summary>Use an API key</summary>
@@ -166,7 +166,7 @@ onUnmounted(() => clearInterval(poll))
 
   <div v-else class="app">
     <header class="top">
-      <strong class="brand">notes</strong>
+      <h1>📝 notes</h1>
       <span class="sync" :class="status?.vault?.state">
         vault: {{ status?.vault?.state ?? 'not synced' }}
       </span>
@@ -174,7 +174,7 @@ onUnmounted(() => clearInterval(poll))
         site: {{ status?.site?.state ?? 'idle' }}
       </span>
       <span class="message">{{ message }}</span>
-      <button :class="{ primary: planItems.length > 0 }" @click="planOpen = true">
+      <button :class="{ accent: planItems.length > 0 }" @click="planOpen = true">
         {{ planItems.length ? `${planItems.length} to publish` : 'All published' }}
       </button>
     </header>
@@ -200,7 +200,7 @@ onUnmounted(() => clearInterval(poll))
             <span class="spacer"></span>
             <button :disabled="!dirty" @click="save">Save</button>
             <button
-              class="primary"
+              class="accent"
               :disabled="applying || (!dirty && !selectedPlanItem)"
               @click="applyPlan([selectedId!])"
             >
@@ -214,7 +214,7 @@ onUnmounted(() => clearInterval(poll))
 
       <section class="pane preview-pane">
         <div class="pane-bar">
-          <span>Preview</span>
+          <span class="pane-title">Preview</span>
           <span v-if="previewErrors.length" class="error">{{ previewErrors.length }} error(s)</span>
         </div>
         <iframe v-if="previewHtml" :srcdoc="previewHtml" title="Preview" sandbox="allow-scripts allow-popups"></iframe>
@@ -226,29 +226,29 @@ onUnmounted(() => clearInterval(poll))
 </template>
 
 <style scoped>
-.login { display: grid; place-content: center; justify-items: center; gap: 16px; height: 100%; }
-.login h1 { margin: 0; font-weight: 600; }
-.login form { display: flex; gap: 6px; margin-top: 8px; }
-.login summary { color: var(--mute); cursor: pointer; }
-.error { color: var(--bad); }
+.login { display: grid; place-content: center; justify-items: center; gap: 1rem; height: 100%; }
+.login form { display: flex; gap: .4rem; margin-top: .6rem; }
+.login summary { color: var(--fg-muted); cursor: pointer; }
+.error { color: var(--accent-pink); }
 .app { display: flex; flex-direction: column; height: 100%; }
-.top { display: flex; align-items: center; gap: 14px; padding: 8px 14px; background: #0b0b0b; border-bottom: 1px solid var(--line); }
-.brand { font-size: 16px; }
-.sync { font-size: 12px; color: var(--mute); }
+.top { display: flex; align-items: center; gap: 1rem; padding: .5rem 1rem; background: var(--bg-deep); border-bottom: 1px solid var(--border-weak); }
+.top h1 { font-size: 1.3rem; }
+.sync { font-size: .8rem; color: var(--fg-muted); }
 .sync.idle { color: var(--ok); }
-.sync.conflict, .sync.error { color: var(--bad); }
+.sync.conflict, .sync.error { color: var(--accent-pink); }
 .sync.syncing, .sync.publishing { color: var(--warn); }
-.message { flex: 1; color: var(--accent); font-size: 13px; }
-.banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 14px; background: #4a2420; color: #ffd6cf; }
-.panes { flex: 1; min-height: 0; display: grid; grid-template-columns: 280px 1fr 1fr; }
-.pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--line); }
-.pane-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--line); min-height: 44px; }
+.message { flex: 1; color: var(--accent-cream); font-size: .85rem; }
+.banner { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .5rem 1rem; background: #3a2533; color: var(--accent-pink); border-bottom: 1px solid var(--border-weak); }
+.panes { flex: 1; min-height: 0; display: grid; grid-template-columns: 17rem 1fr 1fr; }
+.pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--border-weak); background: var(--bg-raised); }
+.pane-bar { display: flex; align-items: center; gap: .6rem; padding: .45rem .8rem; background: var(--bg-base); border-bottom: 1px solid var(--border-weak); min-height: 3rem; }
 .pane-bar .spacer { flex: 1; }
-.dirty { color: var(--warn); font-size: 12px; }
-.state { font-size: 12px; color: var(--mute); }
+.pane-title { color: var(--fg-muted); font-weight: 600; font-size: .85rem; }
+.dirty { color: var(--warn); font-size: .8rem; }
+.state { font-size: .8rem; color: var(--fg-muted); }
 .editor-pane > :last-child { flex: 1; min-height: 0; }
-.preview-pane iframe { flex: 1; border: 0; background: #353331; width: 100%; }
-.empty { color: var(--mute); padding: 24px; }
+.preview-pane iframe { flex: 1; border: 0; background: var(--bg-raised); width: 100%; }
+.empty { color: var(--fg-muted); padding: 1.5rem; }
 @media (max-width: 900px) {
   .panes { grid-template-columns: 1fr; grid-template-rows: 35% 1fr; }
   .preview-pane { display: none; }

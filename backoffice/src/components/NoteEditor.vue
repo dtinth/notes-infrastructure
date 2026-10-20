@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { markdown } from '@codemirror/lang-markdown'
-import { oneDark } from '@codemirror/theme-one-dark'
 import { EditorView, basicSetup } from 'codemirror'
 import { keymap } from '@codemirror/view'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { editorTheme } from '../editorTheme'
 
 const model = defineModel<string>({ required: true })
 const emit = defineEmits<{ save: [] }>()
@@ -17,7 +17,7 @@ onMounted(() => {
     extensions: [
       basicSetup,
       markdown(),
-      oneDark,
+      editorTheme,
       EditorView.lineWrapping,
       keymap.of([{ key: 'Mod-s', preventDefault: true, run: () => (emit('save'), true) }]),
       EditorView.updateListener.of((update) => {
@@ -42,7 +42,6 @@ onBeforeUnmount(() => view?.destroy())
 </template>
 
 <style scoped>
-.editor { height: 100%; overflow: hidden; }
-.editor :deep(.cm-editor) { height: 100%; font-size: 13.5px; }
-.editor :deep(.cm-scroller) { font-family: ui-monospace, 'DejaVu Sans Mono', monospace; }
+.editor { height: 100%; overflow: hidden; background: var(--bg-deep); }
+.editor :deep(.cm-editor) { height: 100%; }
 </style>
