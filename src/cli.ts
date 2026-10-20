@@ -2,6 +2,7 @@ import { compileMarkdown } from '@notes/compiler/dist/compiler/index.js'
 import { resolve } from 'path'
 import { compileNote, compilerVersion } from './compiler'
 import { apply, computePlan, formatPlanItem } from './plan'
+import { serve } from './serve'
 import { buildSite } from './site'
 import { SupabaseStore } from './store'
 import { generatePublicTree } from './tree'
@@ -64,9 +65,13 @@ switch (command) {
     })
     break
   }
+  case 'serve': {
+    await serve()
+    break
+  }
   default:
     console.error(
-      'Usage: notes <index | compile <id> | build [outDir] | plan | apply [id...]>',
+      'Usage: notes <serve | index | compile <id> | build [outDir] | plan | apply [id...]>',
     )
     process.exit(1)
 }

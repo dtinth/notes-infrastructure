@@ -14,14 +14,18 @@
     "supabase": "npx -y supabase@2.121.0"
   },
   "dependencies": {
+    "@elysiajs/cors": "^1.4.2",
     "@notes/client": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-client-0.0.261020163032.tgz",
     "@notes/compiler": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-compiler-0.0.261020163032.tgz",
     "@notes/html-generator": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-html-generator-0.0.261020163032.tgz",
     "@prettier/plugin-xml": "3.4.1",
     "@supabase/supabase-js": "^2",
     "@thai/funny-json": "npm:@jsr/thai__funny-json@0.0.2",
+    "chokidar": "^4.0.3",
+    "elysia": "^1.4.30",
     "gray-matter": "^4.0.3",
     "hast-util-to-text": "^4.0.2",
+    "jose": "^6.2.13",
     "memoize-one": "^6.0.0",
     "micromark": "^4.0.3",
     "micromark-extension-gfm-footnote": "^2.1.0",
