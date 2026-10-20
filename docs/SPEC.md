@@ -26,10 +26,15 @@ Note version = sha256 hex of the full source file (unchanged from legacy).
 
 ## Shape
 
-- Infra is this repo, shipped as a `notes` CLI (Q2).
-- Distribution: a single bundled JS file (`bun build --target=bun`, `#!/usr/bin/env bun`) attached to GitHub Releases of this repo, with backoffice assets inlined. If something (e.g. shiki’s wasm) can’t be inlined, ship a tarball instead (Q25).
-- The vault pins `notes` and `bun` in its `mise.toml`; its `pitchfork.toml` runs `notes serve` (Q25).
-- Runs bare on the always-on VPS, not in a container, so Claude Code can work in the vault checkout directly. Dokploy’s Traefik is only the HTTPS proxy in front (Q1, Q21).
+- Infra is this repo (Q2). The vault is a separate repo, checked out as a plain directory on the always-on VPS, so Claude Code can work in it directly (Q1).
+- Deployment (revised after the grilling; replaces the earlier “bare under pitchfork” and “binary on GitHub Releases” decisions in Q1/Q25):
+  - The server runs as a Dokploy app built from a Dockerfile in this repo. Pushing to the repo deploys it.
+  - The vault directory is bind-mounted into the container. The container runs as the host user’s uid, so files and commits aren’t owned by root. The image includes git, with `safe.directory` set for the mount.
+  - Dokploy provides the domain and HTTPS (Q21) and holds the secrets as env vars.
+  - Server state (the dt.in.th clone, the `@notes/*` package cache) lives in a named volume.
+  - The server’s auto-commit and agents’ git commands share one working tree, so git operations retry when they hit `index.lock`.
+- `notes` CLI: a thin client of the server’s API (`notes plan`, `notes apply`) for agents and for you on the host. It can still be shipped as a single bundled JS file (`bun build --target=bun`, `#!/usr/bin/env bun`).
+- mise is used for local development (pinning Bun).
 - Stack: Bun + Elysia, reusing the good parts of legacy `service/` (`NotesSource`, `MarkdownContent`, `indexNote`, `generatePublicTree`, `generateSitegraph`, the static-site tasks) (Q16).
 - Vault index is in memory, rebuilt from files on start and on change; no local database (Q15).
 
@@ -59,7 +64,7 @@ Interfaces:
 
 Same output as legacy `generate_static_site.ts`: `<slug>.html` and `<slug>.md` for listed notes, alias `.html` copies, `index.html` (HomePage), `404.html`, `api/{tree.json,sitemap.txt,sitegraph.json,index.json,recent.xml}`, client/runtime/compiler assets, `CNAME`, `.nojekyll` and `.well-known/matrix/client`. RSS is driven by `Recent.md` as today (Q27).
 
-The dt.in.th clone lives in a state dir the server owns (`~/.local/state/notes/site`), not in the vault (Q20). The server commits with a stat-line message and pushes using the GitHub App.
+The dt.in.th clone lives in the server’s state volume, not in the vault (Q20). The server commits with a stat-line message and pushes using the GitHub App.
 
 ## Vault sync
 
@@ -92,7 +97,7 @@ No schema changes in v1 (Q22). Tables `notes_contents` (`id, source, source_vers
 
 ## Secrets
 
-One GitHub App, installed on the vault repo and dtinth/dt.in.th, with contents read/write only. Its private key, the Supabase service key and `NOTES_API_KEY` live in a mise env file **outside** the vault, so agents working in the vault never see them (Q18).
+One GitHub App, installed on the vault repo and dtinth/dt.in.th, with contents read/write only. Its private key, the Supabase service key and `NOTES_API_KEY` are Dokploy env vars, **outside** the vault, so agents working in the vault never see them (Q18).
 
 ## Testing
 
