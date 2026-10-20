@@ -5,6 +5,7 @@ import { join, resolve, sep } from 'path'
 import { Elysia, t } from 'elysia'
 import { mintAccessToken, verifyAccessToken } from './accessToken'
 import type { CompileFn } from './compiler'
+import { NoteSearch } from './noteSearch'
 import { apply, computePlan, formatPlanItem } from './plan'
 import type { PublishedStore } from './store'
 import { isValidNoteId } from './vault'
@@ -57,6 +58,9 @@ export function createApp(deps: ServerDeps) {
       return false
     }
   }
+
+  const noteSearch = new NoteSearch(vault.notes)
+  vault.onChange(() => noteSearch.invalidate())
 
   const noteResponse = (id: string) => {
     const note = vault.notes.get(id)
@@ -157,6 +161,9 @@ export function createApp(deps: ServerDeps) {
             },
             { body: t.Object({ source: t.String() }) },
           )
+          .post('/search', ({ body }) => noteSearch.search(body.q), {
+            body: t.Object({ q: t.String() }),
+          })
           .get('/plan', async () => {
             const items = computePlan(
               vault.notes,

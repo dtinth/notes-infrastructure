@@ -9,6 +9,14 @@ export interface NoteSummary {
   modifiedAt: number
 }
 
+export interface SearchResult {
+  id: string
+  title: string
+  excerpt: string
+  public: boolean
+  linksHere: boolean
+}
+
 export type PlanItem =
   | { op: 'create' | 'update' | 'recompile'; id: string }
   | { op: 'delete'; id: string; reason: 'unpublished' | 'missing' }
@@ -63,6 +71,7 @@ export const api = {
     ),
   saveNote: (id: string, source: string) =>
     request<{ version: string }>('PUT', `/api/notes/${encodeURIComponent(id)}`, { source }),
+  search: (q: string) => request<SearchResult[]>('POST', '/api/search', { q }),
   plan: () => request<{ items: PlanItem[] }>('GET', '/api/plan'),
   apply: (ids?: string[]) => request<{ items: PlanItem[] }>('POST', '/api/apply', { ids }),
   status: () => request<Status>('GET', '/api/status'),

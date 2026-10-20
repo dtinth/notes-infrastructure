@@ -6,6 +6,7 @@ import { addRevision, makePublic } from './frontmatter'
 import NoteEditor from './components/NoteEditor.vue'
 import NoteList from './components/NoteList.vue'
 import PlanDialog from './components/PlanDialog.vue'
+import SearchPalette from './components/SearchPalette.vue'
 
 const signedIn = ref(false)
 const loginError = ref('')
@@ -91,6 +92,35 @@ async function applyPlan(ids?: string[]) {
   }
 }
 
+// Cmd+K, as in the legacy VS Code extension: with text selected, links it
+// to the picked note; otherwise opens the picked note. Until something is
+// typed, it searches for the open note plus the selection, which brings up
+// related notes and the ones linking here.
+const editor = ref<InstanceType<typeof NoteEditor>>()
+const searchShortcut = /Mac|iPhone|iPad/.test(navigator.userAgent) ? '⌘K' : 'Ctrl+K'
+const palette = ref<{ linkText?: string; contextQuery: string }>()
+function openPalette(selectedText = '') {
+  const linkText = selectedText.trim() ? selectedText : undefined
+  const context = linkText ?? source.value.slice(0, 2000)
+  palette.value = { linkText, contextQuery: `${selectedId.value ?? ''} ${context}` }
+}
+function closePalette() {
+  palette.value = undefined
+  editor.value?.focus()
+}
+async function pickFromPalette(id: string) {
+  const linkText = palette.value?.linkText
+  palette.value = undefined
+  if (linkText) editor.value?.replaceSelection(`[${linkText}](${id})`)
+  else await select(id)
+}
+function onGlobalKeydown(event: KeyboardEvent) {
+  if (signedIn.value && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    event.preventDefault()
+    if (!palette.value) openPalette()
+  }
+}
+
 // Actions edit the source in the editor; saving and publishing stay manual.
 const actionsMenu = ref<HTMLDetailsElement>()
 function runAction(action: 'public' | 'revision') {
@@ -159,8 +189,12 @@ onMounted(async () => {
   }
   poll = setInterval(() => signedIn.value && refresh().catch(() => {}), 10_000)
   window.addEventListener('beforeunload', (event) => dirty.value && event.preventDefault())
+  window.addEventListener('keydown', onGlobalKeydown)
 })
-onUnmounted(() => clearInterval(poll))
+onUnmounted(() => {
+  clearInterval(poll)
+  window.removeEventListener('keydown', onGlobalKeydown)
+})
 </script>
 
 <template>
@@ -227,9 +261,9 @@ onUnmounted(() => clearInterval(poll))
               {{ selectedPlanItem?.op === 'delete' ? 'Unpublish' : 'Publish' }}
             </button>
           </div>
-          <NoteEditor v-model="source" @save="save" />
+          <NoteEditor ref="editor" v-model="source" @save="save" @search="openPalette" />
         </template>
-        <p v-else class="empty">Pick a note, or press + to start one.</p>
+        <p v-else class="empty">Pick a note, press <kbd>{{ searchShortcut }}</kbd> to search, or + to start one.</p>
       </section>
 
       <section class="pane preview-pane">
@@ -241,6 +275,15 @@ onUnmounted(() => clearInterval(poll))
       </section>
     </main>
 
+    <SearchPalette
+      v-if="palette"
+      :link-text="palette.linkText"
+      :context-query="palette.contextQuery"
+      :current-id="selectedId"
+      :recent="notes"
+      @pick="pickFromPalette"
+      @close="closePalette"
+    />
     <PlanDialog v-if="planOpen" :items="planItems" :applying="applying" @apply="applyPlan" @close="planOpen = false" />
   </div>
 </template>

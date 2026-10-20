@@ -119,6 +119,19 @@ describe('api', () => {
     expect(readFileSync(outside, 'utf-8')).toContain('secret')
   })
 
+  test('searches every note, private ones too, and marks ones linking here', async () => {
+    const search = async (q: string) => (await s.request('POST', '/api/search', { q })).json()
+    const draft = await search('private')
+    expect(draft[0]).toMatchObject({ id: 'Draft', public: false, linksHere: false })
+
+    const linking = await search('JavaScript')
+    expect(linking.find((r: any) => r.id === 'Article')).toMatchObject({ linksHere: true })
+
+    // Saving a note updates the index.
+    await s.request('PUT', '/api/notes/Fresh', { source: '# Fresh\n\nZebracorn.' })
+    expect((await search('zebracorn')).map((r: any) => r.id)).toEqual(['Fresh'])
+  })
+
   test('requires auth', async () => {
     expect((await s.request('GET', '/api/notes', undefined, '')).status).toBe(401)
   })

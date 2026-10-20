@@ -34,7 +34,7 @@ USER ${NOTES_UID}:${NOTES_GID}
 #
 # That uid may have no home directory or passwd entry, so git is
 # configured through the environment rather than ~/.gitconfig:
-# trust the mounted repos, and commit as the notes bot.
+# trust the mounted repos, and commit as dtinth (as legacy sync did).
 ENV HOME=/data/home \
   XDG_CACHE_HOME=/data/cache \
   NOTES_VAULT=/vault \
@@ -42,10 +42,10 @@ ENV HOME=/data/home \
   GIT_CONFIG_COUNT=1 \
   GIT_CONFIG_KEY_0=safe.directory \
   GIT_CONFIG_VALUE_0=* \
-  GIT_AUTHOR_NAME=notes \
-  GIT_AUTHOR_EMAIL=notes@dt.in.th \
-  GIT_COMMITTER_NAME=notes \
-  GIT_COMMITTER_EMAIL=notes@dt.in.th \
+  GIT_AUTHOR_NAME="Thai Pangsakulyanont" \
+  GIT_AUTHOR_EMAIL=dtinth@spacet.me \
+  GIT_COMMITTER_NAME="Thai Pangsakulyanont" \
+  GIT_COMMITTER_EMAIL=dtinth@spacet.me \
   NOTES_SITE_REMOTE=https://github.com/dtinth/dt.in.th \
   PORT=21024
 
