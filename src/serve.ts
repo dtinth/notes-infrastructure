@@ -66,6 +66,12 @@ export async function serve() {
   // It also signs session tokens, so a short one could be guessed offline.
   if (apiKey.length < 32) log('warning: NOTES_API_KEY is shorter than 32 characters')
 
+  // An empty vault folder is filled from the vault repo on first run.
+  const vaultRemote = process.env.NOTES_VAULT_REMOTE
+  if (vaultRemote) {
+    await new GitRepo(vaultDir, tokenFor(vaultRemote)).ensureCloned(vaultRemote)
+  }
+
   const vault = new VaultIndex(vaultDir)
   vault.watch()
   log(`indexed ${vault.notes.size} notes in ${vaultDir}`)

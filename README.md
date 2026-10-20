@@ -45,7 +45,7 @@ NOTES_VAULT=example-vault NOTES_SYNC=0 NOTES_API_KEY=dev \
 
 ## Deployment
 
-Dokploy builds the `Dockerfile`. The settings it needs (run user, mounts, env) are listed at the top of the Dockerfile.
+Dokploy builds the `Dockerfile`. The settings it needs (the `NOTES_UID`/`NOTES_GID` build args, mounts, env) are listed at the top of the Dockerfile.
 
 | Variable | |
 | --- | --- |
@@ -53,6 +53,7 @@ Dokploy builds the `Dockerfile`. The settings it needs (run user, mounts, env) a
 | `SUPABASE_API_KEY` | Supabase service role key |
 | `SUPABASE_ADMIN_UID` | The Supabase user allowed into the backoffice and private notes |
 | `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY` | GitHub App installed on the vault repo and dtinth/dt.in.th, with contents read/write. The key can be one line: `base64 -w0 key.pem`, or the PEM with `\n` escapes |
+| `NOTES_VAULT_REMOTE` | The vault repo, e.g. `https://github.com/dtinth/notes`. If the vault folder is empty, it is cloned there on first run |
 | `NOTES_SITE_REMOTE` | Defaults to `https://github.com/dtinth/dt.in.th` |
 | `NOTES_SYNC_IDLE_MS` | How long the vault must be quiet before it is committed (default 5 minutes) |
 | `NOTES_SYNC` | `0` turns vault sync off |

@@ -18,10 +18,19 @@ COPY src ./src
 COPY --from=backoffice /app/backoffice/dist ./backoffice/dist
 
 # Deployed by Dokploy. There, set:
-# - the run user to the uid:gid that owns the vault on the host
-# - mounts: the vault (bind) at /vault, a volume at /data
+# - build args NOTES_UID and NOTES_GID: who owns the vault on the host
+#   (`id -u`, `id -g`; the gid defaults to the uid)
+# - mounts: the vault folder (bind) at /vault, a named volume at /data
 # - env: NOTES_API_KEY, SUPABASE_API_KEY, SUPABASE_ADMIN_UID,
-#   GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, NOTES_SITE_REMOTE
+#   GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, NOTES_VAULT_REMOTE
+#
+# The server runs as that user, so files it writes in the vault belong to
+# them on the host. /data is created owned by them, which a new named
+# volume inherits.
+ARG NOTES_UID=1000
+ARG NOTES_GID=${NOTES_UID}
+RUN mkdir -p /data /vault && chown ${NOTES_UID}:${NOTES_GID} /data /vault
+USER ${NOTES_UID}:${NOTES_GID}
 #
 # That uid may have no home directory or passwd entry, so git is
 # configured through the environment rather than ~/.gitconfig:
