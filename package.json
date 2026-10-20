@@ -9,7 +9,9 @@
     "build": "bun run scripts/build.ts",
     "test": "bun test",
     "parity": "bun run scripts/parity.ts",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:integration": "bun run scripts/test-integration.ts",
+    "supabase": "npx -y supabase@2.121.0"
   },
   "dependencies": {
     "@notes/client": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-client-0.0.261020163032.tgz",

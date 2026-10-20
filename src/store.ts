@@ -26,14 +26,19 @@ export interface PublishedStore {
   uploadPublicFile(name: string, contents: string): Promise<void>
 }
 
-export const supabaseUrl = 'https://htrqhjrmmqrqaccchyne.supabase.co'
+export const productionSupabaseUrl = 'https://htrqhjrmmqrqaccchyne.supabase.co'
 
 export class SupabaseStore implements PublishedStore {
   private supabase: SupabaseClient
 
-  constructor(apiKey = process.env.SUPABASE_API_KEY) {
+  constructor({
+    url = process.env.SUPABASE_URL || productionSupabaseUrl,
+    apiKey = process.env.SUPABASE_API_KEY,
+  } = {}) {
     if (!apiKey) throw new Error('SUPABASE_API_KEY is not set')
-    this.supabase = createClient(supabaseUrl, apiKey)
+    this.supabase = createClient(url, apiKey, {
+      auth: { persistSession: false },
+    })
   }
 
   listRows() {
