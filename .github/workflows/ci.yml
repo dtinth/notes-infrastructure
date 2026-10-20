@@ -1,0 +1,28 @@
+name: CI
+on:
+  push:
+    branches: [main, next]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - name: Start local Supabase
+        run: npx -y supabase@2.121.0 start -x imgproxy,edge-runtime,logflare,vector,supavisor,postgres-meta
+      - name: Test (including integration tests)
+        run: bun run test:integration
+      - run: bun run build
+      - name: Bundled CLI builds the example site
+        working-directory: example-vault
+        run: ../dist/notes.js build ../.out/site && test -f ../.out/site/JavaScript.html
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t notes .
