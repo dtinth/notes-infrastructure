@@ -7,12 +7,16 @@
   },
   "scripts": {
     "build": "bun run scripts/build.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "parity": "bun run scripts/parity.ts",
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@notes/client": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-client-0.0.261020163032.tgz",
     "@notes/compiler": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-compiler-0.0.261020163032.tgz",
     "@notes/html-generator": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-html-generator-0.0.261020163032.tgz",
+    "@prettier/plugin-xml": "3.4.1",
+    "@thai/funny-json": "npm:@jsr/thai__funny-json@0.0.2",
     "gray-matter": "^4.0.3",
     "hast-util-to-text": "^4.0.2",
     "memoize-one": "^6.0.0",
@@ -20,12 +24,19 @@
     "micromark-extension-gfm-footnote": "^2.1.0",
     "micromark-extension-gfm-strikethrough": "^2.1.0",
     "micromark-extension-gfm-table": "^2.1.2",
+    "minisearch": "7.1.0",
+    "p-map": "7",
+    "prettier": "3.3.3",
     "rehype-parse": "^9.0.1",
+    "rss": "1.2.2",
+    "stemmer": "^2.0.1",
+    "stopwords": "^0.0.9",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.1.0"
   },
   "devDependencies": {
     "@types/bun": "^1.4.3",
+    "@types/rss": "^0.0.32",
     "typescript": "^7.0.2"
   }
 }

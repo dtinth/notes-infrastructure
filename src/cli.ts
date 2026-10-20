@@ -1,8 +1,6 @@
 import { compileMarkdown } from '@notes/compiler/dist/compiler/index.js'
-import { generateHtml } from '@notes/html-generator'
-import { mkdirSync, writeFileSync } from 'fs'
-import { join, resolve } from 'path'
-import { copySiteAssets } from './assets'
+import { resolve } from 'path'
+import { buildSite } from './site'
 import { generatePublicTree } from './tree'
 import { readVault } from './vault'
 
@@ -32,20 +30,9 @@ switch (command) {
   }
   case 'build': {
     const outDir = resolve(args[0] || 'dist-site')
-    mkdirSync(outDir, { recursive: true })
     const notes = readVault(vaultDir)
-    const tree = generatePublicTree(notes)
-    for (const id of Object.keys(tree.nodes)) {
-      const note = notes.get(id)!
-      const { compiled } = await compileMarkdown(note.source, id)
-      const html = generateHtml({ slug: id, compiled })
-      writeFileSync(join(outDir, `${id}.html`), html)
-      if (id === 'HomePage') writeFileSync(join(outDir, 'index.html'), html)
-      console.log(`built ${id}.html`)
-    }
-    writeFileSync(join(outDir, 'api-tree.json'), JSON.stringify(tree, null, 2))
-    await copySiteAssets(outDir)
-    console.log('copied browser assets')
+    const publicNotes = new Map([...notes].filter(([, note]) => note.public))
+    await buildSite(publicNotes, outDir, { log: console.log })
     break
   }
   default:

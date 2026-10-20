@@ -1,9 +1,6 @@
-export interface TreeNote {
-  public: boolean
-  topic: boolean
-  title: string
-  links: string[]
-}
+import { linksOf, type VaultNote } from './vault'
+
+type TreeNote = Pick<VaultNote, 'public' | 'topic' | 'title' | 'links'>
 
 export interface PublicTree {
   nodes: Record<string, { title?: string; parent?: string }>
@@ -28,8 +25,9 @@ export function generatePublicTree(notes: Map<string, TreeNote>): PublicTree {
     visited.add(slug)
     output[slug] = { title: note.title, parent: costMap.get(slug)!.via }
 
-    const childCost = thisCost + note.links.length * (note.topic ? 0.001 : 1)
-    for (const link of note.links) {
+    const links = linksOf(note)
+    const childCost = thisCost + links.length * (note.topic ? 0.001 : 1)
+    for (const link of links) {
       queue.push(link)
       if (!costMap.has(link) || childCost < costMap.get(link)!.cost) {
         costMap.set(link, { cost: childCost, via: slug })
@@ -37,6 +35,13 @@ export function generatePublicTree(notes: Map<string, TreeNote>): PublicTree {
     }
     queue.sort((a, b) => costMap.get(a)!.cost - costMap.get(b)!.cost)
   }
-  const sorted = Object.keys(output).sort()
-  return { nodes: Object.fromEntries(sorted.map((k) => [k, output[k]])) }
+  return { nodes: sortKeys(output) }
+}
+
+export function sortKeys<T>(object: Record<string, T>): Record<string, T> {
+  return Object.fromEntries(
+    Object.keys(object)
+      .sort()
+      .map((key) => [key, object[key]]),
+  )
 }
