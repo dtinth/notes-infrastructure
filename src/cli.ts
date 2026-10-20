@@ -1,6 +1,9 @@
 import { compileMarkdown } from '@notes/compiler/dist/compiler/index.js'
 import { resolve } from 'path'
+import { compileNote, compilerVersion } from './compiler'
+import { apply, computePlan, formatPlanItem } from './plan'
 import { buildSite } from './site'
+import { SupabaseStore } from './store'
 import { generatePublicTree } from './tree'
 import { readVault } from './vault'
 
@@ -35,7 +38,35 @@ switch (command) {
     await buildSite(publicNotes, outDir, { log: console.log })
     break
   }
+  case 'plan': {
+    const store = new SupabaseStore()
+    const plan = computePlan(
+      readVault(vaultDir),
+      await store.listRows(),
+      compilerVersion,
+    )
+    for (const item of plan) console.log(formatPlanItem(item))
+    const count = (op: string) => plan.filter((i) => i.op === op).length
+    console.log(
+      `${count('create')} to create, ${count('update')} to update, ` +
+        `${count('delete')} to delete, ${count('recompile')} to recompile`,
+    )
+    break
+  }
+  case 'apply': {
+    await apply({
+      store: new SupabaseStore(),
+      vault: readVault(vaultDir),
+      compile: compileNote,
+      compilerVersion,
+      ids: args.length ? args : undefined,
+      log: console.log,
+    })
+    break
+  }
   default:
-    console.error('Usage: notes <index|compile <id>|build [outDir]>')
+    console.error(
+      'Usage: notes <index | compile <id> | build [outDir] | plan | apply [id...]>',
+    )
     process.exit(1)
 }
