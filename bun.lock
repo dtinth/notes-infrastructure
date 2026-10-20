@@ -5,9 +5,9 @@
     "": {
       "name": "notes",
       "dependencies": {
-        "@notes/client": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.251207045915/notes-client-0.0.251207045915.tgz",
-        "@notes/compiler": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.251207045915/notes-compiler-0.0.251207045915.tgz",
-        "@notes/html-generator": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.251207045915/notes-html-generator-0.0.251207045915.tgz",
+        "@notes/client": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-client-0.0.261020163032.tgz",
+        "@notes/compiler": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-compiler-0.0.261020163032.tgz",
+        "@notes/html-generator": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-html-generator-0.0.261020163032.tgz",
         "gray-matter": "^4.0.3",
         "hast-util-to-text": "^4.0.2",
         "memoize-one": "^6.0.0",
@@ -26,11 +26,11 @@
     },
   },
   "packages": {
-    "@notes/client": ["@notes/client@https://github.com/dtinth/notes-frontend/releases/download/v0.0.251207045915/notes-client-0.0.251207045915.tgz", {}, "sha512-ZAQ+YTvfqZhEvkULKyaYLtwtGHySgeEJ3puP3uAkFGYW9Hr/kqec188AToLi7RRBjf5KD3IBFreyDIko+O8y3A=="],
+    "@notes/client": ["@notes/client@https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-client-0.0.261020163032.tgz", {}, "sha512-9aiXi+HareVJq6K2m0PZRZrsaXAxWkiv/R3xITOpHOVqBcPy2b9sZ6nDq2pDrJts7t4rPzEcoKsBZ6CQSWicdw=="],
 
-    "@notes/compiler": ["@notes/compiler@https://github.com/dtinth/notes-frontend/releases/download/v0.0.251207045915/notes-compiler-0.0.251207045915.tgz", { "dependencies": { "rehype-remove-comments": "^6.1.1" } }, "sha512-NEdpAV0lNeHEDVL2Qaetek7u82SVXqlDAKyK8sX1P0dJHOEMH/fw252Gt+RFhaQUML1a3Nb8vDWAd6WiLRcAdw=="],
+    "@notes/compiler": ["@notes/compiler@https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-compiler-0.0.261020163032.tgz", { "dependencies": { "rehype-remove-comments": "^6.1.1" } }, "sha512-X9bm+MhRlGyUstZG9QshPDHoEzQP4jhfAXvXElUkdgnHn8hxuBPGVPV7sT+B9xG+m/cGMcKDrBtCEQlX6Ga63g=="],
 
-    "@notes/html-generator": ["@notes/html-generator@https://github.com/dtinth/notes-frontend/releases/download/v0.0.251207045915/notes-html-generator-0.0.251207045915.tgz", { "dependencies": { "lodash-es": "^4.17.21" } }, "sha512-J+lXo0qsWDuoWG+/4pJGT5k3aNJb+y4UwPFvSUJ8W+7mosEKZfUfF1Zb7+lz8LIx0kwUTSPoOZ07N1aYjpsDJg=="],
+    "@notes/html-generator": ["@notes/html-generator@https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-html-generator-0.0.261020163032.tgz", { "dependencies": { "lodash-es": "^4.17.21" } }, "sha512-YDXYVwvDEkcT91MS5bVCgDXovseFxZ3ab38ZyZajMPHyI+lneoCyG/CDApicDQg2LRphDeeDF+QZ692naoxJRQ=="],
 
     "@types/bun": ["@types/bun@1.4.3", "", { "dependencies": { "bun-types": "1.4.3" } }, "sha512-N67Pqy8JXbAY/j0tNraS3V5mubGvc6rrrNDmDCtZLlFzccbUJPDb0tvgUBC5q4m8ybkP93Jcn1QB+RYQ6PvBhw=="],
 

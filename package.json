@@ -10,9 +10,9 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@notes/client": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.251207045915/notes-client-0.0.251207045915.tgz",
-    "@notes/compiler": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.251207045915/notes-compiler-0.0.251207045915.tgz",
-    "@notes/html-generator": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.251207045915/notes-html-generator-0.0.251207045915.tgz",
+    "@notes/client": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-client-0.0.261020163032.tgz",
+    "@notes/compiler": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-compiler-0.0.261020163032.tgz",
+    "@notes/html-generator": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-html-generator-0.0.261020163032.tgz",
     "gray-matter": "^4.0.3",
     "hast-util-to-text": "^4.0.2",
     "memoize-one": "^6.0.0",
