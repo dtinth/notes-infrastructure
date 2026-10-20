@@ -7,7 +7,7 @@ export const editorTheme = [
   EditorView.theme(
     {
       '&': { color: 'var(--fg-warm)', backgroundColor: 'var(--bg-deep)', height: '100%' },
-      '.cm-scroller': { fontFamily: 'var(--font-mono)', fontSize: '14px', lineHeight: '1.6' },
+      '.cm-scroller': { fontFamily: 'var(--font-mono)', fontSize: '16px', lineHeight: '1.6' },
       '.cm-content': { caretColor: 'var(--accent-lime)', padding: '12px 0' },
       '.cm-cursor': { borderLeftColor: 'var(--accent-lime)' },
       '.cm-gutters': { backgroundColor: 'var(--bg-deep)', color: '#555453', border: 'none' },

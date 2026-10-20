@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { markdown } from '@codemirror/lang-markdown'
 import { EditorView, basicSetup } from 'codemirror'
-import { Prec } from '@codemirror/state'
+import { EditorSelection, Prec } from '@codemirror/state'
 import { keymap } from '@codemirror/view'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { editorTheme } from '../editorTheme'
@@ -9,6 +9,31 @@ import { editorTheme } from '../editorTheme'
 const model = defineModel<string>({ required: true })
 const emit = defineEmits<{ save: []; search: [selectedText: string] }>()
 const host = ref<HTMLElement>()
+
+/**
+ * Typing * or _ with text selected wraps the selection instead of
+ * replacing it, and keeps it selected, so ** makes it bold.
+ */
+const wrapSelection = EditorView.inputHandler.of((view, _from, _to, text) => {
+  if (text !== '*' && text !== '_') return false
+  const { state } = view
+  if (state.selection.ranges.every((range) => range.empty)) return false
+  view.dispatch(
+    state.changeByRange((range) =>
+      range.empty
+        ? { changes: { from: range.from, insert: text }, range: EditorSelection.cursor(range.from + 1) }
+        : {
+            changes: [
+              { from: range.from, insert: text },
+              { from: range.to, insert: text },
+            ],
+            range: EditorSelection.range(range.from + 1, range.to + 1),
+          },
+    ),
+    { userEvent: 'input' },
+  )
+  return true
+})
 let view: EditorView | undefined
 
 onMounted(() => {
@@ -19,6 +44,7 @@ onMounted(() => {
       basicSetup,
       markdown(),
       editorTheme,
+      wrapSelection,
       EditorView.lineWrapping,
       Prec.high(
         keymap.of([
