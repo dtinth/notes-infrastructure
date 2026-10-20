@@ -11,11 +11,11 @@ const emit = defineEmits<{ save: []; search: [selectedText: string] }>()
 const host = ref<HTMLElement>()
 
 /**
- * Typing * or _ with text selected wraps the selection instead of
+ * Typing *, _ or ` with text selected wraps the selection instead of
  * replacing it, and keeps it selected, so ** makes it bold.
  */
 const wrapSelection = EditorView.inputHandler.of((view, _from, _to, text) => {
-  if (text !== '*' && text !== '_') return false
+  if (!['*', '_', '`'].includes(text)) return false
   const { state } = view
   if (state.selection.ranges.every((range) => range.empty)) return false
   view.dispatch(

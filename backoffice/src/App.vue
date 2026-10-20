@@ -145,12 +145,32 @@ function flash(text: string) {
   flashTimer = setTimeout(() => (message.value = ''), 4000)
 }
 
+const PREVIEW_KEY = 'notes:preview'
+const showPreview = ref(readPreference() !== 'hidden')
+function readPreference() {
+  try {
+    return localStorage.getItem(PREVIEW_KEY)
+  } catch {
+    return null
+  }
+}
+watch(showPreview, (shown) => {
+  try {
+    localStorage.setItem(PREVIEW_KEY, shown ? 'shown' : 'hidden')
+  } catch {}
+})
+
+/** The note on the live site, in private mode (shows unpublished notes). */
+const siteUrl = computed(
+  () => selectedId.value && `https://dt.in.th/private/${encodeURIComponent(selectedId.value)}`,
+)
+
 // Preview follows the editor, compiled on the server.
 let previewTimer: ReturnType<typeof setTimeout> | undefined
-watch([source, selectedId], () => {
+watch([source, selectedId, showPreview], () => {
   clearTimeout(previewTimer)
   previewTimer = setTimeout(async () => {
-    if (!selectedId.value) return
+    if (!selectedId.value || !showPreview.value) return
     const { html, errors } = await guard(api.preview(selectedId.value, source.value))
     previewHtml.value = html
     previewErrors.value = errors
@@ -231,7 +251,7 @@ onUnmounted(() => {
       <button @click="retrySync">Retry sync</button>
     </div>
 
-    <main class="panes">
+    <main class="panes" :class="{ 'no-preview': !showPreview }">
       <NoteList :notes="notes" :plan="plan" :selected="selectedId" @select="select" @create="createNote" />
 
       <section class="pane editor-pane">
@@ -250,8 +270,16 @@ onUnmounted(() => {
               <div class="menu-items">
                 <button @click="runAction('public')">Make public</button>
                 <button @click="runAction('revision')">Add revision…</button>
+                <a class="button" :href="siteUrl" target="_blank" rel="noopener" @click="actionsMenu!.open = false">Open on dt.in.th ↗</a>
               </div>
             </details>
+            <button
+              :aria-pressed="showPreview"
+              :title="showPreview ? 'Hide preview' : 'Show preview'"
+              @click="showPreview = !showPreview"
+            >
+              Preview
+            </button>
             <button :disabled="!dirty" @click="save">Save</button>
             <button
               class="accent"
@@ -266,10 +294,12 @@ onUnmounted(() => {
         <p v-else class="empty">Pick a note, press <kbd>{{ searchShortcut }}</kbd> to search, or + to start one.</p>
       </section>
 
-      <section class="pane preview-pane">
+      <section v-show="showPreview" class="pane preview-pane">
         <div class="pane-bar">
           <span class="pane-title">Preview</span>
           <span v-if="previewErrors.length" class="error">{{ previewErrors.length }} error(s)</span>
+          <span class="spacer"></span>
+          <a v-if="siteUrl" :href="siteUrl" target="_blank" rel="noopener">Open on dt.in.th ↗</a>
         </div>
         <iframe v-if="previewHtml" :srcdoc="previewHtml" title="Preview" sandbox="allow-scripts allow-popups"></iframe>
       </section>
@@ -303,6 +333,7 @@ onUnmounted(() => {
 .message { flex: 1; color: var(--accent-cream); font-size: .85rem; }
 .banner { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .5rem 1rem; background: #3a2533; color: var(--accent-pink); border-bottom: 1px solid var(--border-weak); }
 .panes { flex: 1; min-height: 0; display: grid; grid-template-columns: 17rem 1fr 1fr; }
+.panes.no-preview { grid-template-columns: 17rem 1fr; }
 .pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--border-weak); background: var(--bg-raised); }
 .pane-bar { display: flex; align-items: center; gap: .6rem; padding: .45rem .8rem; background: var(--bg-base); border-bottom: 1px solid var(--border-weak); min-height: 3rem; }
 .pane-bar .spacer { flex: 1; }
@@ -316,7 +347,9 @@ onUnmounted(() => {
 .menu summary { list-style: none; }
 .menu summary::-webkit-details-marker { display: none; }
 .menu-items { position: absolute; right: 0; top: calc(100% + .3rem); z-index: 10; display: flex; flex-direction: column; gap: .25rem; padding: .35rem; min-width: 11rem; background: var(--bg-raised); border: 1px solid var(--border-weak); border-radius: var(--radius-sm); box-shadow: 0 6px 20px #0006; }
-.menu-items button { text-align: left; }
+.menu-items button, .menu-items .button { text-align: left; }
+button[aria-pressed='true'] { color: var(--accent-sky); border-color: var(--accent-sky); }
+.preview-pane .pane-bar a { font-size: .85rem; }
 @media (max-width: 900px) {
   .panes { grid-template-columns: 1fr; grid-template-rows: 35% 1fr; }
   .preview-pane { display: none; }
