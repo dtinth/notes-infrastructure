@@ -1,5 +1,5 @@
 import { $ } from 'bun'
-import { existsSync } from 'fs'
+import { existsSync, statSync } from 'fs'
 import { join } from 'path'
 
 /** Returns a GitHub token for pushing and pulling, if there is one. */
@@ -49,6 +49,37 @@ export class GitRepo {
     if (existsSync(join(this.dir, '.git'))) return
     const auth = await this.authArgs()
     await $`git ${auth} clone --quiet ${remote} ${this.dir}`.quiet()
+  }
+
+  private commitTimes?: { head: string; times: Map<string, number> }
+
+  /**
+   * When each file was last touched: the time of its last commit, or its
+   * mtime if it has uncommitted changes. (After a clone, every mtime is the
+   * clone's.) Paths are relative to the repo; files git doesn't know about
+   * are left out.
+   */
+  async lastModifiedTimes() {
+    const head = (await this.git(['rev-parse', 'HEAD'])).trim()
+    if (this.commitTimes?.head !== head) {
+      const log = await this.git(['-c', 'core.quotePath=false', 'log', '--format=%x00%ct', '--name-only', '--no-renames'])
+      const times = new Map<string, number>()
+      for (const entry of log.split('\0')) {
+        const [time, ...paths] = entry.trim().split('\n')
+        for (const path of paths) {
+          if (path && !times.has(path)) times.set(path, Number(time) * 1000)
+        }
+      }
+      this.commitTimes = { head, times }
+    }
+    const times = new Map(this.commitTimes.times)
+    const status = await this.git(['status', '--porcelain', '-z', '--untracked-files=all'])
+    for (const entry of status.split('\0')) {
+      const path = entry.slice(3)
+      const stat = path && statSync(join(this.dir, path), { throwIfNoEntry: false })
+      if (stat) times.set(path, stat.mtimeMs)
+    }
+    return times
   }
 
   async push() {

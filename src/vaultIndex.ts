@@ -1,5 +1,5 @@
 import { watch } from 'chokidar'
-import { closeSync, constants, openSync, writeFileSync } from 'fs'
+import { closeSync, constants, lstatSync, openSync, writeFileSync } from 'fs'
 import { basename, extname, join } from 'path'
 import { isValidNoteId, parseNote, readNoteFile, readVault, type VaultNote } from './vault'
 
@@ -48,6 +48,11 @@ export class VaultIndex {
       closeSync(fd)
     }
     this.refresh(id)
+  }
+
+  /** The note file's mtime in ms, or 0 if it's gone. */
+  mtimeOf(id: string) {
+    return lstatSync(this.pathOf(id), { throwIfNoEntry: false })?.mtimeMs ?? 0
   }
 
   onChange(listener: () => void) {

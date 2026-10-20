@@ -99,6 +99,8 @@ export async function serve() {
     )
   }
 
+  // Separate from vaultSync's repo, so it needs no token: it only reads.
+  const vaultTimes = new GitRepo(vaultDir)
   const store = new SupabaseStore({ url: supabaseUrl })
   const status: Record<string, unknown> = {}
   const site = siteDir
@@ -133,6 +135,7 @@ export async function serve() {
     onPublished: site?.trigger,
     getStatus: () => ({ ...status, vault: vaultSync?.status }),
     renderPreview,
+    getModifiedTimes: () => vaultTimes.lastModifiedTimes(),
     backofficeConfig: {
       supabaseUrl,
       supabaseAnonKey: anonKey,

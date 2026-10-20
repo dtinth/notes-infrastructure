@@ -29,6 +29,8 @@ export interface ServerDeps {
   retrySync?: () => Promise<unknown>
   /** Renders a note's source as its page, for previews. */
   renderPreview?: (source: string, id: string) => Promise<{ html: string; errors: string[] }>
+  /** When each vault file was last modified, in ms, keyed by file name. */
+  getModifiedTimes?: () => Promise<Map<string, number>>
   /** Public settings the backoffice needs to sign in. */
   backofficeConfig?: Record<string, string>
   /** Directory with the built backoffice, served at /admin/. */
@@ -126,16 +128,18 @@ export function createApp(deps: ServerDeps) {
       .group('/api', (app) =>
         app
           .use(authenticated)
-          .get('/notes', () =>
-            [...vault.notes.values()]
+          .get('/notes', async () => {
+            const times = (await deps.getModifiedTimes?.().catch(() => undefined)) ?? new Map()
+            return [...vault.notes.values()]
               .map((note) => ({
                 id: note.id,
                 title: note.title,
                 version: note.version,
                 public: note.public,
+                modifiedAt: times.get(`${note.id}.md`) ?? vault.mtimeOf(note.id),
               }))
-              .sort((a, b) => a.id.localeCompare(b.id)),
-          )
+              .sort((a, b) => b.modifiedAt - a.modifiedAt || a.id.localeCompare(b.id))
+          })
           .get('/notes/:id', ({ params, set }) => {
             const response = noteResponse(params.id)
             if (!response) set.status = 'Not Found'

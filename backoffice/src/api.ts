@@ -5,6 +5,8 @@ export interface NoteSummary {
   title: string
   version: string
   public: boolean
+  /** Last commit, or last edit if not yet committed (ms). */
+  modifiedAt: number
 }
 
 export type PlanItem =

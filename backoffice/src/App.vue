@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { api, getToken, setToken, Unauthorized, type NoteSummary, type PlanItem, type Status } from './api'
 import { refreshSession, signInWithGoogle } from './auth'
+import { addRevision, makePublic } from './frontmatter'
 import NoteEditor from './components/NoteEditor.vue'
 import NoteList from './components/NoteList.vue'
 import PlanDialog from './components/PlanDialog.vue'
@@ -87,6 +88,18 @@ async function applyPlan(ids?: string[]) {
     if (!planItems.value.length) planOpen.value = false
   } finally {
     applying.value = false
+  }
+}
+
+// Actions edit the source in the editor; saving and publishing stay manual.
+const actionsMenu = ref<HTMLDetailsElement>()
+function runAction(action: 'public' | 'revision') {
+  actionsMenu.value!.open = false
+  if (action === 'public') {
+    source.value = makePublic(source.value)
+  } else {
+    const description = prompt('What changed in this revision?')?.trim()
+    if (description) source.value = addRevision(source.value, description)
   }
 }
 
@@ -198,6 +211,13 @@ onUnmounted(() => clearInterval(poll))
             <span v-else-if="selectedNote?.public" class="state op-create">published</span>
             <span v-else class="state">private</span>
             <span class="spacer"></span>
+            <details ref="actionsMenu" class="menu">
+              <summary class="button">Actions</summary>
+              <div class="menu-items">
+                <button @click="runAction('public')">Make public</button>
+                <button @click="runAction('revision')">Add revision…</button>
+              </div>
+            </details>
             <button :disabled="!dirty" @click="save">Save</button>
             <button
               class="accent"
@@ -249,6 +269,11 @@ onUnmounted(() => clearInterval(poll))
 .editor-pane > :last-child { flex: 1; min-height: 0; }
 .preview-pane iframe { flex: 1; border: 0; background: var(--bg-raised); width: 100%; }
 .empty { color: var(--fg-muted); padding: 1.5rem; }
+.menu { position: relative; }
+.menu summary { list-style: none; }
+.menu summary::-webkit-details-marker { display: none; }
+.menu-items { position: absolute; right: 0; top: calc(100% + .3rem); z-index: 10; display: flex; flex-direction: column; gap: .25rem; padding: .35rem; min-width: 11rem; background: var(--bg-raised); border: 1px solid var(--border-weak); border-radius: var(--radius-sm); box-shadow: 0 6px 20px #0006; }
+.menu-items button { text-align: left; }
 @media (max-width: 900px) {
   .panes { grid-template-columns: 1fr; grid-template-rows: 35% 1fr; }
   .preview-pane { display: none; }

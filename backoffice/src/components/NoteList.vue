@@ -10,6 +10,15 @@ const props = defineProps<{
 defineEmits<{ select: [id: string]; create: [] }>()
 
 const query = ref('')
+
+const ago = (ms: number) => {
+  const minutes = Math.round((Date.now() - ms) / 60_000)
+  if (minutes < 1) return 'now'
+  if (minutes < 60) return `${minutes}m`
+  if (minutes < 60 * 24) return `${Math.round(minutes / 60)}h`
+  if (minutes < 60 * 24 * 60) return `${Math.round(minutes / 60 / 24)}d`
+  return new Date(ms).toLocaleDateString('sv').slice(0, 7)
+}
 const filtered = computed(() => {
   const q = query.value.toLowerCase()
   return props.notes.filter(
@@ -38,7 +47,10 @@ const filtered = computed(() => {
         <span v-else class="op"></span>
         <span class="text">
           <span class="title">{{ note.title || note.id }}</span>
-          <code class="id plain">{{ note.id }}</code>
+          <span class="meta">
+            <code class="id plain">{{ note.id }}</code>
+            <time :datetime="new Date(note.modifiedAt).toISOString()">{{ ago(note.modifiedAt) }}</time>
+          </span>
         </span>
         <span v-if="!note.public" class="badge">private</span>
       </li>
@@ -59,5 +71,7 @@ li.private .title { color: var(--fg-muted); }
 .title { font-size: .85rem; }
 .title, .id { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .id { color: var(--fg-muted); font-size: .7rem; }
+.meta { display: flex; gap: .5rem; min-width: 0; }
+time { color: var(--fg-muted); font-size: .7rem; margin-left: auto; flex-shrink: 0; }
 .badge { font-size: .7rem; color: var(--fg-muted); border: 1px solid var(--border-weak); border-radius: var(--radius-sm); padding: 0 .35rem; }
 </style>
