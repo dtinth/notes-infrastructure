@@ -30,6 +30,8 @@ export interface Status {
 const TOKEN_KEY = 'notes:token'
 
 export class Unauthorized extends Error {}
+/** The note changed on disk since the editor loaded it. */
+export class Conflict extends Error {}
 
 export function getToken() {
   try {
@@ -56,6 +58,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     body: body ? JSON.stringify(body) : undefined,
   })
   if (response.status === 401) throw new Unauthorized()
+  if (response.status === 409) throw new Conflict()
   if (!response.ok) {
     throw new Error(`${method} ${path}: ${response.status} ${await response.text()}`)
   }
@@ -69,8 +72,11 @@ export const api = {
       'GET',
       `/api/notes/${encodeURIComponent(id)}`,
     ),
-  saveNote: (id: string, source: string) =>
-    request<{ version: string }>('PUT', `/api/notes/${encodeURIComponent(id)}`, { source }),
+  saveNote: (id: string, source: string, baseVersion?: string) =>
+    request<{ version: string }>('PUT', `/api/notes/${encodeURIComponent(id)}`, {
+      source,
+      baseVersion,
+    }),
   search: (q: string) => request<SearchResult[]>('POST', '/api/search', { q }),
   plan: () => request<{ items: PlanItem[] }>('GET', '/api/plan'),
   apply: (ids?: string[]) => request<{ items: PlanItem[] }>('POST', '/api/apply', { ids }),

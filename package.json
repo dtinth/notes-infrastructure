@@ -52,6 +52,7 @@
     "@types/rss": "^0.0.32",
     "@vitejs/plugin-vue": "^6",
     "codemirror": "^6",
+    "node-diff3": "3.1.2",
     "playwright-core": "^1.64.1",
     "typescript": "5.9.3",
     "vite": "^7",

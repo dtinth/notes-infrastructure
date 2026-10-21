@@ -27,6 +27,8 @@
 }
 * { box-sizing: border-box; }
 html, body, #app { height: 100%; margin: 0; }
+/* The visible height on phones, where 100% runs under the browser's bars. */
+#app { height: 100dvh; }
 body {
   font-family: var(--font-sans); font-size: 15px; line-height: 1.6; letter-spacing: .01em;
   background: var(--bg-base); color: var(--fg-primary);
@@ -81,3 +83,7 @@ code.plain { background: none; border: none; box-shadow: none; padding: 0; }
 .op-update { color: var(--warn); }
 .op-delete { color: var(--accent-pink); }
 .op-recompile { color: var(--fg-muted); }
+/* At under 16px, iOS zooms into a field when it gets focus. */
+@media (max-width: 760px) {
+  input { font-size: 16px; }
+}

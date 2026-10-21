@@ -67,11 +67,23 @@ onMounted(() => {
   })
 })
 
-// Loading another note replaces the document.
+// Outside updates (another note, actions, merged changes) replace only the
+// part that differs, so the cursor and scroll stay put where they can.
 watch(model, (value) => {
-  if (view && value !== view.state.doc.toString()) {
-    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: value } })
-  }
+  if (!view) return
+  const current = view.state.doc.toString()
+  if (value === current) return
+  let start = 0
+  while (start < current.length && start < value.length && current[start] === value[start]) start++
+  let end = 0
+  while (
+    end < current.length - start &&
+    end < value.length - start &&
+    current[current.length - 1 - end] === value[value.length - 1 - end]
+  ) end++
+  view.dispatch({
+    changes: { from: start, to: current.length - end, insert: value.slice(start, value.length - end) },
+  })
 })
 
 onBeforeUnmount(() => view?.destroy())

@@ -99,6 +99,20 @@ describe('api', () => {
     expect(plan.lines).toEqual(['~ Article'])
   })
 
+  test('refuses to save over changes made since the note was loaded', async () => {
+    const { note } = await (await s.request('GET', '/api/notes/Article')).json()
+    writeFileSync(join(s.dir, 'Article.md'), 'changed by an agent')
+    s.vault.refresh('Article')
+
+    const stale = await s.request('PUT', '/api/notes/Article', { source: 'mine', baseVersion: note.version })
+    expect(stale.status).toBe(409)
+    expect(readFileSync(join(s.dir, 'Article.md'), 'utf-8')).toBe('changed by an agent')
+
+    const { version } = await stale.json()
+    const fresh = await s.request('PUT', '/api/notes/Article', { source: 'mine', baseVersion: version })
+    expect(fresh.status).toBe(200)
+  })
+
   test('refuses note ids that escape the vault', async () => {
     for (const id of ['..%2Fescape', '.hidden', '%2Ftmp%2Fescape']) {
       const response = await s.request('PUT', `/api/notes/${id}`, { source: 'x' })

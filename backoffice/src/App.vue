@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { api, getToken, setToken, Unauthorized, type NoteSummary, type PlanItem, type Status } from './api'
+import { api, Conflict, getToken, setToken, Unauthorized, type NoteSummary, type PlanItem, type Status } from './api'
 import { refreshSession, signInWithGoogle } from './auth'
 import { addRevision, makePublic } from './frontmatter'
+import { CONFLICT_START, mergeOutsideChanges } from './merge'
 import NoteEditor from './components/NoteEditor.vue'
 import NoteList from './components/NoteList.vue'
 import PlanDialog from './components/PlanDialog.vue'
+import PreviewFrame from './components/PreviewFrame.vue'
 import SearchPalette from './components/SearchPalette.vue'
 
 const signedIn = ref(false)
@@ -19,6 +21,8 @@ const status = ref<Status>()
 const selectedId = ref<string>()
 const source = ref('')
 const savedSource = ref('')
+/** Version of `savedSource`, the note as on disk when last loaded or saved. */
+const savedVersion = ref<string>()
 const previewHtml = ref('')
 const previewErrors = ref<string[]>([])
 const planOpen = ref(false)
@@ -27,6 +31,7 @@ const message = ref('')
 
 const plan = computed(() => new Map(planItems.value.map((item) => [item.id, item])))
 const dirty = computed(() => source.value !== savedSource.value)
+const hasConflictMarkers = computed(() => source.value.includes(CONFLICT_START))
 const selectedPlanItem = computed(() =>
   selectedId.value ? plan.value.get(selectedId.value) : undefined,
 )
@@ -51,22 +56,62 @@ async function refresh() {
   notes.value = list
   planItems.value = planResult.items
   status.value = statusResult
+  const onDisk = list.find((note) => note.id === selectedId.value)
+  if (onDisk && savedVersion.value && onDisk.version !== savedVersion.value) {
+    await pullOutsideChanges()
+  }
 }
 
 async function select(id: string) {
   if (dirty.value && !confirm('Discard unsaved changes?')) return
-  const { source: text } = await guard(api.getNote(id))
+  const { source: text, note } = await guard(api.getNote(id))
   selectedId.value = id
   source.value = savedSource.value = text
+  savedVersion.value = note.version
+  phoneView.value = 'editor'
   history.replaceState(null, '', `#${encodeURIComponent(id)}`)
+}
+
+/**
+ * Brings in changes made to the open note outside the editor, e.g. by an
+ * agent: as is if there are no unsaved edits, else merged into them.
+ */
+async function pullOutsideChanges() {
+  const id = selectedId.value
+  if (!id) return
+  const { source: theirs, note } = await guard(api.getNote(id))
+  if (id !== selectedId.value || note.version === savedVersion.value) return
+  if (!dirty.value) {
+    source.value = theirs
+    flash('Updated with changes from outside the editor')
+  } else {
+    const merged = mergeOutsideChanges(savedSource.value, source.value, theirs)
+    source.value = merged.text
+    flash(
+      merged.conflict
+        ? 'Outside changes conflict with yours: see the markers in the editor'
+        : 'Merged changes from outside the editor into yours',
+    )
+  }
+  savedSource.value = theirs
+  savedVersion.value = note.version
 }
 
 async function save() {
   if (!selectedId.value || !dirty.value) return
+  if (hasConflictMarkers.value && !confirm('The note still has conflict markers. Save anyway?')) return
   const text = source.value
-  await guard(api.saveNote(selectedId.value, text))
-  savedSource.value = text
-  flash('Saved')
+  try {
+    const { version } = await guard(api.saveNote(selectedId.value, text, savedVersion.value))
+    savedSource.value = text
+    savedVersion.value = version
+    flash('Saved')
+  } catch (error) {
+    if (!(error instanceof Conflict)) throw error
+    await pullOutsideChanges()
+    flash('The note changed outside the editor. Merged; check it and save again.')
+    return
+  }
   await refresh()
 }
 
@@ -160,6 +205,19 @@ watch(showPreview, (shown) => {
   } catch {}
 })
 
+// On a phone, one view at a time: the list, the editor, or the preview.
+const phoneQuery = matchMedia('(max-width: 760px)')
+const isPhone = ref(phoneQuery.matches)
+phoneQuery.addEventListener('change', (event) => (isPhone.value = event.matches))
+const phoneView = ref<'list' | 'editor' | 'preview'>('list')
+const previewVisible = computed(() =>
+  isPhone.value ? phoneView.value === 'preview' : showPreview.value,
+)
+function togglePreview() {
+  if (isPhone.value) phoneView.value = phoneView.value === 'preview' ? 'editor' : 'preview'
+  else showPreview.value = !showPreview.value
+}
+
 /** The note on the live site, in private mode (shows unpublished notes). */
 const siteUrl = computed(
   () => selectedId.value && `https://dt.in.th/private/${encodeURIComponent(selectedId.value)}`,
@@ -167,10 +225,10 @@ const siteUrl = computed(
 
 // Preview follows the editor, compiled on the server.
 let previewTimer: ReturnType<typeof setTimeout> | undefined
-watch([source, selectedId, showPreview], () => {
+watch([source, selectedId, previewVisible], () => {
   clearTimeout(previewTimer)
   previewTimer = setTimeout(async () => {
-    if (!selectedId.value || !showPreview.value) return
+    if (!selectedId.value || !previewVisible.value) return
     const { html, errors } = await guard(api.preview(selectedId.value, source.value))
     previewHtml.value = html
     previewErrors.value = errors
@@ -208,11 +266,17 @@ onMounted(async () => {
       .catch((error) => (loginError.value = String(error.message ?? error)))
   }
   poll = setInterval(() => signedIn.value && refresh().catch(() => {}), 10_000)
+  // Coming back to the tab (say, after an agent edited the note) checks now.
+  document.addEventListener('visibilitychange', onVisible)
   window.addEventListener('beforeunload', (event) => dirty.value && event.preventDefault())
   window.addEventListener('keydown', onGlobalKeydown)
 })
+function onVisible() {
+  if (document.visibilityState === 'visible' && signedIn.value) refresh().catch(() => {})
+}
 onUnmounted(() => {
   clearInterval(poll)
+  document.removeEventListener('visibilitychange', onVisible)
   window.removeEventListener('keydown', onGlobalKeydown)
 })
 </script>
@@ -231,7 +295,7 @@ onUnmounted(() => {
     <p v-if="loginError" class="error">{{ loginError }}</p>
   </div>
 
-  <div v-else class="app">
+  <div v-else class="app" :class="`phone-${phoneView}`">
     <header class="top">
       <h1>📝 notes</h1>
       <span class="sync" :class="status?.vault?.state">
@@ -246,18 +310,25 @@ onUnmounted(() => {
       </button>
     </header>
 
+    <div v-if="hasConflictMarkers" class="banner">
+      <span>Changes made outside the editor conflict with yours. Keep what you want between the &lt;&lt;&lt;&lt;&lt;&lt;&lt; and &gt;&gt;&gt;&gt;&gt;&gt;&gt; markers, remove the markers, then save.</span>
+    </div>
+
     <div v-if="status?.vault?.state === 'conflict' || status?.vault?.state === 'error'" class="banner">
       <span>{{ status.vault.message }}</span>
       <button @click="retrySync">Retry sync</button>
     </div>
 
     <main class="panes" :class="{ 'no-preview': !showPreview }">
-      <NoteList :notes="notes" :plan="plan" :selected="selectedId" @select="select" @create="createNote" />
+      <NoteList
+        class="list-pane"
+        :notes="notes" :plan="plan" :selected="selectedId" @select="select" @create="createNote" />
 
       <section class="pane editor-pane">
         <template v-if="selectedId">
           <div class="pane-bar">
-            <code>{{ selectedId }}.md</code>
+            <button class="back" aria-label="Back to notes" @click="phoneView = 'list'">‹ Notes</button>
+            <code class="file">{{ selectedId }}.md</code>
             <span v-if="dirty" class="dirty">unsaved</span>
             <span v-else-if="selectedPlanItem" :class="['state', `op-${selectedPlanItem.op}`]">
               {{ selectedPlanItem.op === 'create' ? 'not published yet' : selectedPlanItem.op === 'delete' ? 'will be unpublished' : 'changed since publish' }}
@@ -274,9 +345,9 @@ onUnmounted(() => {
               </div>
             </details>
             <button
-              :aria-pressed="showPreview"
-              :title="showPreview ? 'Hide preview' : 'Show preview'"
-              @click="showPreview = !showPreview"
+              :aria-pressed="previewVisible"
+              :title="previewVisible ? 'Hide preview' : 'Show preview'"
+              @click="togglePreview"
             >
               Preview
             </button>
@@ -294,14 +365,15 @@ onUnmounted(() => {
         <p v-else class="empty">Pick a note, press <kbd>{{ searchShortcut }}</kbd> to search, or + to start one.</p>
       </section>
 
-      <section v-show="showPreview" class="pane preview-pane">
+      <section v-show="previewVisible" class="pane preview-pane">
         <div class="pane-bar">
+          <button class="back" @click="phoneView = 'editor'">‹ Edit</button>
           <span class="pane-title">Preview</span>
           <span v-if="previewErrors.length" class="error">{{ previewErrors.length }} error(s)</span>
           <span class="spacer"></span>
           <a v-if="siteUrl" :href="siteUrl" target="_blank" rel="noopener">Open on dt.in.th ↗</a>
         </div>
-        <iframe v-if="previewHtml" :srcdoc="previewHtml" title="Preview" sandbox="allow-scripts allow-popups"></iframe>
+        <PreviewFrame v-if="previewHtml" :html="previewHtml" :page="selectedId" />
       </section>
     </main>
 
@@ -341,7 +413,6 @@ onUnmounted(() => {
 .dirty { color: var(--warn); font-size: .8rem; }
 .state { font-size: .8rem; color: var(--fg-muted); }
 .editor-pane > :last-child { flex: 1; min-height: 0; }
-.preview-pane iframe { flex: 1; border: 0; background: var(--bg-raised); width: 100%; }
 .empty { color: var(--fg-muted); padding: 1.5rem; }
 .menu { position: relative; }
 .menu summary { list-style: none; }
@@ -350,8 +421,28 @@ onUnmounted(() => {
 .menu-items button, .menu-items .button { text-align: left; }
 button[aria-pressed='true'] { color: var(--accent-sky); border-color: var(--accent-sky); }
 .preview-pane .pane-bar a { font-size: .85rem; }
-@media (max-width: 900px) {
-  .panes { grid-template-columns: 1fr; grid-template-rows: 35% 1fr; }
-  .preview-pane { display: none; }
+.back { display: none; }
+@media (max-width: 760px) {
+  .top { gap: .6rem; padding: .4rem .8rem; }
+  .top h1 { font-size: 1.1rem; white-space: nowrap; }
+  .sync { white-space: nowrap; font-size: .75rem; }
+  .top > button { margin-left: auto; }
+  /* Flash messages float at the bottom instead of squeezing the header. */
+  .message { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 30; text-align: center; pointer-events: none; }
+  .message:not(:empty) { padding: .5rem .8rem; background: var(--bg-elev); border-radius: var(--radius-sm); box-shadow: 0 6px 20px #0008; }
+  .panes, .panes.no-preview { grid-template-columns: 1fr; }
+  .pane { border-right: 0; }
+  .phone-list .editor-pane, .phone-list .preview-pane { display: none !important; }
+  .phone-editor .list-pane, .phone-editor .preview-pane { display: none !important; }
+  .phone-preview .list-pane, .phone-preview .editor-pane { display: none !important; }
+  .back { display: inline-block; }
+  /* The bar's buttons get a row of their own, sharing it evenly. */
+  .editor-pane .pane-bar { flex-wrap: wrap; row-gap: .45rem; }
+  .editor-pane .pane-bar .spacer { flex-basis: 100%; height: 0; }
+  .editor-pane .pane-bar > button:not(.back), .editor-pane .pane-bar .menu { flex: 1; }
+  .editor-pane .pane-bar .menu summary { width: 100%; text-align: center; }
+  .editor-pane .pane-bar button { padding: .4rem .5rem; }
+  .file { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .menu-items { left: 0; right: auto; }
 }
 </style>

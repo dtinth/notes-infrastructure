@@ -156,10 +156,17 @@ export function createApp(deps: ServerDeps) {
                 set.status = 'Bad Request'
                 return { error: 'Invalid note id' }
               }
+              // Refuse to overwrite changes made since the editor loaded the
+              // note (by an agent, or a pull); the editor merges and retries.
+              const current = vault.notes.get(params.id)?.version
+              if (body.baseVersion !== undefined && current && current !== body.baseVersion) {
+                set.status = 'Conflict'
+                return { error: 'The note changed since it was loaded', version: current }
+              }
               vault.write(params.id, body.source)
               return { version: vault.notes.get(params.id)!.version }
             },
-            { body: t.Object({ source: t.String() }) },
+            { body: t.Object({ source: t.String(), baseVersion: t.Optional(t.String()) }) },
           )
           .post('/search', ({ body }) => noteSearch.search(body.q), {
             body: t.Object({ q: t.String() }),
