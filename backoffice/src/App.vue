@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { api, Conflict, getToken, setToken, Unauthorized, type NoteSummary, type PlanItem, type Status } from './api'
+import { api, Conflict, getToken, setToken, Unauthorized, type NoteSummary, type PlanItem, type Preview, type Status } from './api'
 import { refreshSession, signInWithGoogle } from './auth'
 import { addRevision, makePublic } from './frontmatter'
 import { CONFLICT_START, mergeOutsideChanges } from './merge'
@@ -23,8 +23,7 @@ const source = ref('')
 const savedSource = ref('')
 /** Version of `savedSource`, the note as on disk when last loaded or saved. */
 const savedVersion = ref<string>()
-const previewHtml = ref('')
-const previewErrors = ref<string[]>([])
+const preview = ref<Preview & { page: string }>()
 const planOpen = ref(false)
 const applying = ref(false)
 const message = ref('')
@@ -229,10 +228,9 @@ watch([source, selectedId, previewVisible], () => {
   clearTimeout(previewTimer)
   previewTimer = setTimeout(async () => {
     if (!selectedId.value || !previewVisible.value) return
-    const { html, errors } = await guard(api.preview(selectedId.value, source.value))
-    previewHtml.value = html
-    previewErrors.value = errors
-  }, 500)
+    const page = selectedId.value
+    preview.value = { ...(await guard(api.preview(page, source.value))), page }
+  }, 300)
 })
 
 async function start() {
@@ -369,11 +367,11 @@ onUnmounted(() => {
         <div class="pane-bar">
           <button class="back" @click="phoneView = 'editor'">‹ Edit</button>
           <span class="pane-title">Preview</span>
-          <span v-if="previewErrors.length" class="error">{{ previewErrors.length }} error(s)</span>
+          <span v-if="preview?.errors.length" class="error">{{ preview?.errors.length }} error(s)</span>
           <span class="spacer"></span>
           <a v-if="siteUrl" :href="siteUrl" target="_blank" rel="noopener">Open on dt.in.th ↗</a>
         </div>
-        <PreviewFrame v-if="previewHtml" :html="previewHtml" :page="selectedId" />
+        <PreviewFrame v-if="preview" :preview="preview" />
       </section>
     </main>
 

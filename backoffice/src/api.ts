@@ -83,7 +83,14 @@ export const api = {
   status: () => request<Status>('GET', '/api/status'),
   retrySync: () => request<unknown>('POST', '/api/sync/retry'),
   preview: (id: string, source: string) =>
-    request<{ html: string; errors: string[] }>('POST', '/api/preview', { id, source }),
+    request<Preview>('POST', '/api/preview', { id, source, origin: location.origin }),
+}
+
+export interface Preview {
+  html: string
+  /** The compiled note, for previews that can hot-reload. */
+  compiled: unknown
+  errors: string[]
 }
 
 export function planSymbol(item: PlanItem) {

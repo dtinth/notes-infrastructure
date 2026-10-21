@@ -53,6 +53,12 @@ async function ensurePackage(name: PackageName) {
   return dir
 }
 
+/** Where one of the site's asset directories is, downloading it if needed. */
+export async function siteAssetDir(target: keyof typeof SITE_ASSETS) {
+  const [name, path] = SITE_ASSETS[target]
+  return join(await ensurePackage(name), path)
+}
+
 export async function copySiteAssets(outDir: string) {
   for (const [target, [name, path]] of Object.entries(SITE_ASSETS)) {
     const dir = await ensurePackage(name)

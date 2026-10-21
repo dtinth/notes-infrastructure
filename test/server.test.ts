@@ -178,4 +178,55 @@ describe('backoffice', () => {
     const response = await app.handle(new Request('http://localhost/admin/'))
     expect(response.headers.get('x-frame-options')).toBe('DENY')
   })
+
+  test('serves the preview runtime, and nothing outside it', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'notes-runtime-'))
+    mkdirSync(join(dir, 'runtime/entry'), { recursive: true })
+    writeFileSync(join(dir, 'runtime/entry/index.js'), 'runtime')
+    writeFileSync(join(dir, 'secret.txt'), 'secret')
+    const app = createApp({
+      vault: new VaultIndex(s.dir),
+      store: new MemoryStore(),
+      compile: async () => '',
+      compilerVersion: 'test',
+      apiKey,
+      adminUid: 'admin',
+      getSupabaseUserId: async () => 'admin',
+      getPreviewRuntimeDir: async () => join(dir, 'runtime'),
+    })
+    const get = (path: string) => app.handle(new Request(`http://localhost${path}`))
+    expect(await (await get('/runtime/entry/index.js')).text()).toBe('runtime')
+    expect((await get('/runtime/..%2Fsecret.txt')).status).toBe(404)
+    expect((await get('/runtime/missing.js')).status).toBe(404)
+  })
+
+  test('previews hot-reload only for a well-formed origin', async () => {
+    const origins: (string | undefined)[] = []
+    const app = createApp({
+      vault: new VaultIndex(s.dir),
+      store: new MemoryStore(),
+      compile: async () => '',
+      compilerVersion: 'test',
+      apiKey,
+      adminUid: 'admin',
+      getSupabaseUserId: async () => 'admin',
+      renderPreview: async (source, id, origin) => {
+        origins.push(origin)
+        return { html: '', compiled: {}, errors: [] }
+      },
+    })
+    const preview = (origin?: string) =>
+      app.handle(
+        new Request('http://localhost/api/preview', {
+          method: 'POST',
+          headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
+          body: JSON.stringify({ id: 'Draft', source: '# Hi', origin }),
+        }),
+      )
+    expect((await preview()).status).toBe(200)
+    expect((await preview('https://notes.example')).status).toBe(200)
+    expect((await preview('https://notes.example"><script>')).status).toBe(400)
+    expect((await preview('javascript:alert(1)')).status).toBe(400)
+    expect(origins).toEqual([undefined, 'https://notes.example'])
+  })
 })

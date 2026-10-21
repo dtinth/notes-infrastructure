@@ -1,3 +1,4 @@
+import { siteAssetDir } from './assets'
 import { compileNote, compilerVersion } from './compiler'
 import { debounced } from './debounce'
 import { GitRepo, type TokenProvider } from './git'
@@ -135,6 +136,7 @@ export async function serve() {
     onPublished: site?.trigger,
     getStatus: () => ({ ...status, vault: vaultSync?.status }),
     renderPreview,
+    getPreviewRuntimeDir: () => siteAssetDir('runtime'),
     getModifiedTimes: () => vaultTimes.lastModifiedTimes(),
     backofficeConfig: {
       supabaseUrl,

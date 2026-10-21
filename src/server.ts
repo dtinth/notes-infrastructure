@@ -29,13 +29,29 @@ export interface ServerDeps {
   /** Resumes vault sync after a conflict was resolved by hand. */
   retrySync?: () => Promise<unknown>
   /** Renders a note's source as its page, for previews. */
-  renderPreview?: (source: string, id: string) => Promise<{ html: string; errors: string[] }>
+  renderPreview?: (
+    source: string,
+    id: string,
+    origin?: string,
+  ) => Promise<{ html: string; compiled: unknown; errors: string[] }>
+  /** Directory with the frontend runtime that previews run. */
+  getPreviewRuntimeDir?: () => Promise<string>
   /** When each vault file was last modified, in ms, keyed by file name. */
   getModifiedTimes?: () => Promise<Map<string, number>>
   /** Public settings the backoffice needs to sign in. */
   backofficeConfig?: Record<string, string>
   /** Directory with the built backoffice, served at /admin/. */
   backofficeDir?: string
+}
+
+/** Whether a string is exactly an http(s) origin, e.g. `https://example.com`. */
+function isOrigin(value: string) {
+  try {
+    const url = new URL(value)
+    return /^https?:$/.test(url.protocol) && url.origin === value
+  } catch {
+    return false
+  }
 }
 
 export function createApp(deps: ServerDeps) {
@@ -61,6 +77,14 @@ export function createApp(deps: ServerDeps) {
 
   const noteSearch = new NoteSearch(vault.notes)
   vault.onChange(() => noteSearch.invalidate())
+
+  /** A regular file inside root, or undefined (no escaping it with `..`). */
+  const fileInside = (root: string, subpath: string) => {
+    const path = resolve(root, subpath)
+    if (path.startsWith(root + sep) && existsSync(path) && statSync(path).isFile()) {
+      return Bun.file(path)
+    }
+  }
 
   const noteResponse = (id: string) => {
     const note = vault.notes.get(id)
@@ -92,11 +116,14 @@ export function createApp(deps: ServerDeps) {
         }
         // An app route or a missing file falls back to the app shell.
         const root = resolve(deps.backofficeDir)
-        const path = resolve(root, params['*'])
-        if (path.startsWith(root + sep) && existsSync(path) && statSync(path).isFile()) {
-          return Bun.file(path)
-        }
-        return Bun.file(join(root, 'index.html'))
+        return fileInside(root, params['*']) ?? Bun.file(join(root, 'index.html'))
+      })
+      .get('/runtime/*', async ({ params, set }) => {
+        const root = deps.getPreviewRuntimeDir && resolve(await deps.getPreviewRuntimeDir())
+        const file = root && fileInside(root, params['*'])
+        if (file) return file
+        set.status = 'Not Found'
+        return 'Not found'
       })
       .get('/backoffice/config', () => deps.backofficeConfig ?? {})
 
@@ -203,9 +230,20 @@ export function createApp(deps: ServerDeps) {
                 set.status = 'Not Implemented'
                 return { error: 'Preview is not available' }
               }
-              return deps.renderPreview(body.source, body.id)
+              if (body.origin !== undefined && !isOrigin(body.origin)) {
+                set.status = 'Bad Request'
+                return { error: 'Invalid origin' }
+              }
+              return deps.renderPreview(body.source, body.id, body.origin)
             },
-            { body: t.Object({ id: t.String(), source: t.String() }) },
+            {
+              body: t.Object({
+                id: t.String(),
+                source: t.String(),
+                /** The backoffice's origin, so the preview can hot-reload. */
+                origin: t.Optional(t.String()),
+              }),
+            },
           ),
       )
   )

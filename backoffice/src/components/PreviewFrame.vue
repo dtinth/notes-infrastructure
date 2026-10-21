@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, toRaw, watch } from 'vue'
+import type { Preview } from '../api'
 
 const props = defineProps<{
-  html: string
-  /** Which note this is; another note starts at the top. */
-  page?: string
+  /** The rendered note; `page` says which note, as another starts at the top. */
+  preview: Preview & { page: string }
 }>()
 
 /**
@@ -18,18 +18,38 @@ addEventListener('message', (e) => { if (typeof e.data?.scrollTo === 'number') s
 addEventListener('load', () => setTimeout(() => parent.postMessage({ previewReady: true }, '*'), 150))
 <\/script>`
 
-// Two frames: the new render loads in the hidden one, then they swap, so an
-// update looks like a hot reload rather than a page load, and keeps scroll.
+// Edits to the same note hot-reload in place when the page supports it (its
+// runtime says `notes-preview:ready`). Otherwise there are two frames: the new
+// render loads in the hidden one, then they swap, which keeps the scroll and
+// looks like a reload rather than a page load.
 const frames = ref<HTMLIFrameElement[]>([])
 const docs = ref(['', ''])
+const pages = ['', '']
+const hot = [false, false]
 const shown = ref(0)
 const loading = ref<number>()
 let scrollY = 0
 
 let fallback: ReturnType<typeof setTimeout> | undefined
-function render(html: string) {
+function update() {
+  const { html, compiled, page } = props.preview
+  const frame = frameAt(shown.value)
+  if (loading.value === undefined && hot[shown.value] && pages[shown.value] === page && frame) {
+    frame.contentWindow?.postMessage({ type: 'notes-preview:update', compiled: toRaw(compiled) }, '*')
+    // Load it the slow way if the page doesn't manage.
+    clearTimeout(fallback)
+    fallback = setTimeout(() => render(html, page), 3000)
+    return
+  }
+  render(html, page)
+}
+
+function render(html: string, page: string) {
   const target = docs.value[shown.value] ? 1 - shown.value : shown.value
+  if (page !== pages[shown.value]) scrollY = 0
   loading.value = target
+  pages[target] = page
+  hot[target] = false
   docs.value[target] = html.includes('</body>') ? html.replace('</body>', `${bridge}</body>`) : html + bridge
   // Swap anyway if the page never says it's ready.
   clearTimeout(fallback)
@@ -57,13 +77,16 @@ function onMessage(event: MessageEvent) {
     scrollY = event.data.previewScroll
   }
   if (event.data?.previewReady) swapTo(index)
+  if (event.data?.type === 'notes-preview:ready') hot[index] = true
+  if (event.data?.type === 'notes-preview:updated' && index === shown.value && loading.value === undefined) {
+    clearTimeout(fallback)
+  }
 }
 
-watch(() => props.html, render)
-watch(() => props.page, () => (scrollY = 0))
+watch(() => props.preview, update)
 onMounted(() => {
   addEventListener('message', onMessage)
-  if (props.html) render(props.html)
+  update()
 })
 onBeforeUnmount(() => {
   removeEventListener('message', onMessage)

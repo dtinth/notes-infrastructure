@@ -76,7 +76,7 @@ Served by the same server. A Vue 3 + Vite SPA (Q6, Q17):
 
 - list and search notes
 - edit Markdown in CodeMirror; saves write the file
-- live preview: the server renders the full page, with a `<base>` pointing at dt.in.th so it uses the live site’s assets (simpler than compiling in the browser, and identical to the published page)
+- live preview: the server renders the full page, with a `<base>` pointing at dt.in.th so it uses the live site’s assets (simpler than compiling in the browser, and identical to the published page). The page runs the frontend runtime this server pins (served at `/runtime/`) and carries `data-preview-origin`; with that attribute, notes-frontend accepts `{type: 'notes-preview:update', compiled}` from its parent at that origin and re-renders in place. Without hot reload support, the backoffice swaps between two frames instead
 - the plan view: publish status, apply one or all
 - the vault sync status / conflict banner
 
