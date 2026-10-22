@@ -17,9 +17,9 @@
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.2",
-    "@notes/client": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-client-0.0.261020163032.tgz",
-    "@notes/compiler": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-compiler-0.0.261020163032.tgz",
-    "@notes/html-generator": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261020163032/notes-html-generator-0.0.261020163032.tgz",
+    "@notes/client": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261022050039/notes-client-0.0.261022050039.tgz",
+    "@notes/compiler": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261022050039/notes-compiler-0.0.261022050039.tgz",
+    "@notes/html-generator": "https://github.com/dtinth/notes-frontend/releases/download/v0.0.261022050039/notes-html-generator-0.0.261022050039.tgz",
     "@prettier/plugin-xml": "3.4.1",
     "@supabase/supabase-js": "^2",
     "@thai/funny-json": "npm:@jsr/thai__funny-json@0.0.2",
